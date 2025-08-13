@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# ТРЕБУЕТСЯ ПЕРЕРАБОТАТЬ!
+
 echo "🔄 Запуск Django..."
 cd /root/project/hearing_project || exit 1
 pkill -f "manage.py runserver" || true
