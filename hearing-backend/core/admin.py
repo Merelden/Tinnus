@@ -1,13 +1,19 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin
 from .models import Participant, Progress, Test, Exercise
+from django.contrib.auth.models import User
 
 @admin.register(Participant)
 class ParticipantAdmin(ModelAdmin):
-    list_display = ('full_name', 'email', 'age', 'phone', 'study_group', 'consent_agreed', 'created_at')
-    list_filter = ('study_group', 'consent_agreed')
-    search_fields = ('full_name', 'email')
+    list_display = ('full_name', 'email', 'age', 'phone', 'study_group', 'created_at')
+    list_filter = ('study_group',)
+    search_fields = ('full_name', 'email', 'user__email')
     readonly_fields = ('created_at',)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "user":
+            kwargs["queryset"] = User.objects.filter(is_superuser=False)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 @admin.register(Progress)
 class ProgressAdmin(ModelAdmin):

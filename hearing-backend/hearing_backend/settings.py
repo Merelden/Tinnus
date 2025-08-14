@@ -61,6 +61,16 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# Список доступных адресов для сервера
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',
+]
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'core.auth_backend.EmailBackend',
+)
+
 ROOT_URLCONF = 'hearing_backend.urls'
 
 TEMPLATES = [
