@@ -1,8 +1,14 @@
 from django.urls import path
 
-from .views import RegisterView, LoginView
+from .views import RegisterView, LoginView, EmailTokenObtainPairView
+from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
+    # Legacy session login (not used with JWT, kept for compatibility):
     path('login/', LoginView.as_view(), name='login'),
+
+    # JWT endpoints:
+    path('token/', EmailTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
