@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import RegisterView, LoginView, EmailTokenObtainPairView
+from .views import RegisterView, LoginView, EmailTokenObtainPairView, TelegramAuthView
 from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
@@ -11,4 +11,7 @@ urlpatterns = [
     # JWT endpoints:
     path('token/', EmailTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+    # Telegram Login Widget endpoint
+    path('auth/telegram/', TelegramAuthView.as_view(), name='telegram_auth'),
 ]

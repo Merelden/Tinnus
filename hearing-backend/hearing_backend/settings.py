@@ -168,3 +168,7 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
+
+# Telegram Login Widget
+TELEGRAM_BOT_TOKEN = '7993827778:AAFb8m1ZBnLlu-Kn3LqraQSQFNO-RmA7qfs'
+TELEGRAM_LOGIN_MAX_AGE = 86400
