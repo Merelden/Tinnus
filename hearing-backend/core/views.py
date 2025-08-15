@@ -38,7 +38,7 @@ class LoginView(APIView):
                 'participant': participant_data,
                 'message': 'Вход выполнен успешно'
             })
-        return Response({'detail': 'Неверный email или пароль.'}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response({'detail': 'Неверный email или пароль.'}, status=status.HTTP_400_BAD_REQUEST)
 
 class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
 

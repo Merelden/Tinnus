@@ -14,10 +14,10 @@ class Participant(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.pk:
-            # Balance within each cohort of 100 participants: max 50 per group per 100
+
             total = Participant.objects.count()
             remainder = total % 100
-            # Count groups within current cohort (last 'remainder' participants)
+
             count15 = 0
             count30 = 0
             if remainder > 0:
@@ -32,7 +32,6 @@ class Participant(models.Model):
             if count30 < 50:
                 available.append(30)
             if not available:
-                # Fallback safety
                 available = [15, 30]
             self.study_group = random.choice(available)
         super().save(*args, **kwargs)
