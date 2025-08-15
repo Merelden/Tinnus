@@ -47,8 +47,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'corsheaders',
     'core',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
@@ -62,10 +62,22 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+CORS_ALLOW_CREDENTIALS = True
+CORS_REPLACE_HTTPS_REFERER = True
+
 # Список доступных адресов для сервера
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
     'http://localhost:8000',
+    'http://127.0.0.1:8000',
+    '*'
+]
+
+CORS_ALLOWED_HOSTS = [
+    'localhost',
 ]
 
 AUTHENTICATION_BACKENDS = (
