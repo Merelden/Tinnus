@@ -71,4 +71,7 @@ class ParticipantSerializer(serializers.ModelSerializer):
                 )
             except IntegrityError:
                 raise serializers.ValidationError({'user': {'email': ['Этот email уже занят.']}})
+            except DjangoValidationError as e:
+                # Propagate model-level validation (e.g., capacity or balancing limits)
+                raise serializers.ValidationError({'study_group': list(e.messages)})
         return participant

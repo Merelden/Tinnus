@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 import random
 
 class Participant(models.Model):
@@ -13,7 +14,21 @@ class Participant(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.pk:
-            self.study_group = random.choice([15, 30])
+            # Enforce max 100 participants and balanced 50/50 groups
+            total = Participant.objects.count()
+            if total >= 100:
+                raise ValidationError('Достигнут лимит участников (100).')
+            count15 = Participant.objects.filter(study_group=15).count()
+            count30 = Participant.objects.filter(study_group=30).count()
+            available = []
+            if count15 < 50:
+                available.append(15)
+            if count30 < 50:
+                available.append(30)
+            if not available:
+                # Fallback safety; should not happen when total < 100
+                available = [15, 30]
+            self.study_group = random.choice(available)
         super().save(*args, **kwargs)
 
     def __str__(self):
