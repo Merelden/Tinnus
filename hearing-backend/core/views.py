@@ -18,7 +18,6 @@ class LoginView(APIView):
         email = request.data.get('email')
         password = request.data.get('password')
 
-        # Required fields validation
         field_errors = {}
         if not email:
             field_errors['email'] = ['Это поле обязательно.']
@@ -42,14 +41,13 @@ class LoginView(APIView):
         return Response({'detail': 'Неверный email или пароль.'}, status=status.HTTP_401_UNAUTHORIZED)
 
 class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
-    # Expect email instead of username
+
     username_field = 'email'
 
     def validate(self, attrs):
         email = attrs.get('email')
         password = attrs.get('password')
 
-        # Required fields validation for JWT obtain
         field_errors = {}
         if not email:
             field_errors['email'] = ['Это поле обязательно.']
@@ -67,7 +65,7 @@ class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
             'refresh': str(refresh),
             'access': str(refresh.access_token),
         }
-        # Optionally include participant payload
+
         try:
             participant = Participant.objects.get(user=user)
             data['participant'] = ParticipantSerializer(participant).data

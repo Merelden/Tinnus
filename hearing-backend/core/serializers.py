@@ -20,7 +20,6 @@ class UserSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
-        # Validate password using Django's validators
         password = attrs.get('password')
         email = attrs.get('email')
         try:
@@ -43,7 +42,17 @@ class ParticipantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Participant
         fields = ['user', 'full_name', 'age', 'phone', 'study_group']
-        extra_kwargs = {'study_group': {'read_only': True}}
+        extra_kwargs = {'study_group': {'read_only': True}, 'phone': {'required': True, 'allow_blank': False}}
+
+    def validate_phone(self, value):
+        if value is None:
+            raise serializers.ValidationError('Это поле обязательно.')
+        value = value.strip()
+        if not value:
+            raise serializers.ValidationError('Это поле обязательно.')
+        if Participant.objects.filter(phone=value).exists():
+            raise serializers.ValidationError('Этот телефон уже занят.')
+        return value
 
     def create(self, validated_data):
         user_data = validated_data.pop('user')
@@ -57,10 +66,9 @@ class ParticipantSerializer(serializers.ModelSerializer):
                     user=user,
                     full_name=validated_data['full_name'],
                     age=validated_data['age'],
-                    phone=validated_data.get('phone', ''),
+                    phone=validated_data['phone'].strip(),
                     email=user_data['email']
                 )
             except IntegrityError:
-                # In case of a race condition on unique email
                 raise serializers.ValidationError({'user': {'email': ['Этот email уже занят.']}})
         return participant
