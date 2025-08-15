@@ -14,19 +14,25 @@ class Participant(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.pk:
-            # Enforce max 100 participants and balanced 50/50 groups
+            # Balance within each cohort of 100 participants: max 50 per group per 100
             total = Participant.objects.count()
-            if total >= 100:
-                raise ValidationError('Достигнут лимит участников (100).')
-            count15 = Participant.objects.filter(study_group=15).count()
-            count30 = Participant.objects.filter(study_group=30).count()
+            remainder = total % 100
+            # Count groups within current cohort (last 'remainder' participants)
+            count15 = 0
+            count30 = 0
+            if remainder > 0:
+                group_vals = list(
+                    Participant.objects.order_by('-id').values_list('study_group', flat=True)[:remainder]
+                )
+                count15 = sum(1 for g in group_vals if g == 15)
+                count30 = sum(1 for g in group_vals if g == 30)
             available = []
             if count15 < 50:
                 available.append(15)
             if count30 < 50:
                 available.append(30)
             if not available:
-                # Fallback safety; should not happen when total < 100
+                # Fallback safety
                 available = [15, 30]
             self.study_group = random.choice(available)
         super().save(*args, **kwargs)
