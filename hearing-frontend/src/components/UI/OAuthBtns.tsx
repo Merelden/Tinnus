@@ -36,6 +36,11 @@ const Button = styled.button`
     height: 44px;
     border-radius: 6px;
     background-color: ${lightGrayColor};
+    
+    img{
+        user-drag: none;
+        -webkit-user-drag: none;
+    }
 `
 
 const OAuthBtns = () => {

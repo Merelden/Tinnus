@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import {primaryColor, whiteColor} from "@/styles/colors";
+import {primaryColor, redColor, whiteColor} from "@/styles/colors";
 
 export const BackgroundPage = styled.section`
     min-height: 100vh;
@@ -8,6 +8,7 @@ export const BackgroundPage = styled.section`
     justify-content: center;
     position: relative;
     padding: 24px;
+    z-index: 10;
 
     .content {
         animation: fadeInUp 400ms ease-out both;
@@ -26,6 +27,7 @@ export const AuthForm = styled.form`
     flex-direction: column;
     gap: 14px;
     margin: 24px 0;
+    z-index: 20;
     button{
         margin-top: 28px;
         background-color: ${primaryColor};
@@ -36,4 +38,29 @@ export const AuthForm = styled.form`
         border-radius: 6px;
         width: 100%;
     }
+`
+export const ContentBlock = styled.div`
+    position: relative;
+`
+export const OtherErrors = styled.div<{$message: string | undefined}>`
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: ${({$message})=> $message ? "114%" : "100%"};
+    opacity: ${({$message})=> $message ? 1 : 0};
+    background-color: ${redColor};
+    border-radius: 25px;
+    z-index: 1;
+    transition: .4s;
+    
+    display: flex;
+    justify-content: center;
+    align-items: end;
+    padding: 4.5%;
+
+    font-family: var(--font-manrope), serif;
+    font-weight: 500;
+    font-size: 24px;
+    color: ${whiteColor};
 `

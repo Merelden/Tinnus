@@ -4,6 +4,8 @@ import {primaryColor, textColor, whiteColor} from "@/styles/colors";
 
 const Wrapper = styled.div`
     background-color: ${whiteColor};
+    z-index: 10;
+    position: relative;
     border-radius: 25px;
     padding: 44px 36px;
     display: flex;

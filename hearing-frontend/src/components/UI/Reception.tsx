@@ -44,7 +44,7 @@ const CheckboxWrapper = styled.span`
     }
 `;
 
-const ReceptionConditions = ({ isReception, setIsReception }: IProps) => {
+const Reception = ({ isReception, setIsReception }: IProps) => {
 
     const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setIsReception(event.target.checked);
@@ -59,11 +59,11 @@ const ReceptionConditions = ({ isReception, setIsReception }: IProps) => {
             />
             <CheckboxWrapper>
                 <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5.83325 13.9032L11.3446 19.25L22.1666 8.75" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M5.83325 13.9032L11.3446 19.25L22.1666 8.75" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </CheckboxWrapper>
         </CheckBoxLabel>
     );
 };
 
-export default ReceptionConditions;
+export default Reception;
