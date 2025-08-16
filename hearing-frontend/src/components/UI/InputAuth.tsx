@@ -87,6 +87,7 @@ const InputAuth = ({image, label, value, onChange, type, error}:IProps) => {
                         value={value}
                         onChange={(e) => onChange(e.target.value)}
                         type={type ? type : 'text'}
+                        min={0}
                     />
                 }
             </Wrapper>

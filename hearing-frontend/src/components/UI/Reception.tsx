@@ -5,6 +5,7 @@ import {lightGrayColor, primaryColor} from "@/styles/colors";
 interface IProps {
     isReception: boolean;
     setIsReception: (isReception: boolean) => void;
+    type?: string
 }
 const CheckBoxLabel = styled.label`
     display: flex;
@@ -44,7 +45,7 @@ const CheckboxWrapper = styled.span`
     }
 `;
 
-const Reception = ({ isReception, setIsReception }: IProps) => {
+const Reception = ({ isReception, setIsReception, type }: IProps) => {
 
     const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setIsReception(event.target.checked);
@@ -53,7 +54,7 @@ const Reception = ({ isReception, setIsReception }: IProps) => {
     return (
         <CheckBoxLabel>
             <StyledCheckbox
-                type="checkbox"
+                type={type ? type : 'checkbox'}
                 checked={isReception}
                 onChange={handleCheckboxChange}
             />

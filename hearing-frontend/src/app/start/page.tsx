@@ -1,5 +1,4 @@
 'use client'
-
 import WaveSvg from "@/components/UI/WaveSvg";
 import WindowBlock from "@/components/UI/WindowBlock";
 import {BackgroundPage} from "@/app/(auth)/page.styled";
@@ -9,11 +8,17 @@ import {useState} from "react";
 import {ReceptionCondition, RoundIcon, StartSection} from "@/app/start/page.styled";
 import Image from "next/image";
 import {useModal} from "@/providers/ModalProvider";
+import {useRouter} from "next/navigation";
 
 
 export default function StartPage() {
     const [isReception, setIsReception] = useState(false);
     const {openModal} = useModal();
+    const route = useRouter()
+
+    const handleNext = () =>{
+        route.push('/tests')
+    }
 
     const handleConfirmModal = () => {
         console.log('erg');
@@ -43,7 +48,7 @@ export default function StartPage() {
                         <Reception isReception={isReception} setIsReception={setIsReception}  />
                         <p>Я принимаю <button onClick={handleConfirmModal}>правила использования</button></p>
                     </ReceptionCondition>
-                    <SubmitButton width={412} height={50} label={'Продолжить'} disabled={!isReception} primary />
+                    <SubmitButton width={412} height={50} label={'Продолжить'} disabled={!isReception} primary onClick={handleNext} />
 
                 </StartSection>
             </WindowBlock>

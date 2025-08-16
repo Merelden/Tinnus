@@ -8,6 +8,7 @@ import Modal from "@/components/UI/Modal";
 const MontserratFont = Montserrat({
     variable: '--font-montserrat',
     subsets: ['latin', 'cyrillic'],
+    weight: ['400', '500', '700'],
 });
 
 const ManropeFont = Manrope({

@@ -16,6 +16,8 @@ const Wrapper = styled.div`
         font-family: var(--font-montserrat);
         font-weight: 800;
         font-size: 32px;
+        line-height: 1;
+        text-align: center;
     }
     p{
         font-family: var(--font-manrope), serif;
