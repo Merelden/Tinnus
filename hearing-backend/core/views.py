@@ -5,8 +5,8 @@ from rest_framework.exceptions import AuthenticationFailed
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from django.conf import settings
-from .models import Participant
-from .serializers import ParticipantSerializer
+from .models import Participant, Question
+from .serializers import ParticipantSerializer, QuestionSerializer
 
 # JWT
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -82,6 +82,17 @@ class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 class EmailTokenObtainPairView(TokenObtainPairView):
     serializer_class = EmailTokenObtainPairSerializer
+
+
+class QuestionsView(APIView):
+    def get(self, request):
+        """
+        Returns questions in the required JSON shape:
+        { "questions": [ { id, question, type, options:[{label}], input? } ] }
+        """
+        qs = Question.objects.prefetch_related('options').all()
+        data = QuestionSerializer(qs, many=True).data
+        return Response({ 'questions': data })
 
 
 class TelegramAuthView(APIView):

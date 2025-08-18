@@ -71,3 +71,32 @@ class Exercise(models.Model):
 
     def __str__(self):
         return f"{self.name} (Timecode: {self.timecode})"
+
+
+class Question(models.Model):
+    TYPE_CHOICES = [
+        ('single', 'single'),
+        ('multiple', 'multiple'),
+    ]
+
+    text = models.TextField()
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    input_text = models.TextField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['id']
+
+    def __str__(self):
+        return f"[{self.id}] {self.text[:50]}{'...' if len(self.text) > 50 else ''}"
+
+
+class QuestionOption(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='options')
+    label = models.CharField(max_length=255)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'id']
+
+    def __str__(self):
+        return self.label

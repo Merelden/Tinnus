@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction, IntegrityError
-from .models import Participant
+from .models import Participant, Question, QuestionOption
 
 class UserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField()
@@ -75,3 +75,19 @@ class ParticipantSerializer(serializers.ModelSerializer):
                 # Propagate model-level validation (e.g., capacity or balancing limits)
                 raise serializers.ValidationError({'study_group': list(e.messages)})
         return participant
+
+
+class QuestionOptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QuestionOption
+        fields = ['label']
+
+
+class QuestionSerializer(serializers.ModelSerializer):
+    question = serializers.CharField(source='text')
+    input = serializers.CharField(source='input_text', allow_null=True, required=False)
+    options = QuestionOptionSerializer(many=True)
+
+    class Meta:
+        model = Question
+        fields = ['id', 'question', 'type', 'options', 'input']

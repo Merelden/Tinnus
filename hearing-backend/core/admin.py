@@ -1,6 +1,6 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin
-from .models import Participant, Progress, Test, Exercise
+from .models import Participant, Progress, Test, Exercise, Question, QuestionOption
 from django.contrib.auth.models import User
 
 @admin.register(Participant)
@@ -32,3 +32,16 @@ class ExerciseAdmin(ModelAdmin):
     list_display = ('name', 'timecode', 'phase', 'file')
     list_filter = ('phase',)
     search_fields = ('name',)
+
+
+class QuestionOptionInline(admin.TabularInline):
+    model = QuestionOption
+    extra = 1
+
+
+@admin.register(Question)
+class QuestionAdmin(ModelAdmin):
+    list_display = ('id', 'text', 'type')
+    search_fields = ('text',)
+    list_filter = ('type',)
+    inlines = [QuestionOptionInline]
