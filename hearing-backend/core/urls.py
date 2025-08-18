@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import RegisterView, LoginView, EmailTokenObtainPairView, TelegramAuthView, QuestionsView
+from .views import RegisterView, LoginView, EmailTokenObtainPairView, TelegramAuthView, QuestionsView, StreakView
 from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
@@ -17,4 +17,7 @@ urlpatterns = [
 
     # Questions endpoint
     path('questions/', QuestionsView.as_view(), name='questions'),
+
+    # Streak endpoint
+    path('streak/', StreakView.as_view(), name='streak'),
 ]

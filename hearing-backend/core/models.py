@@ -12,6 +12,11 @@ class Participant(models.Model):
     study_group = models.IntegerField(choices=[(15, '15 days'), (30, '30 days')])
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # Visit tracking
+    last_visit_date = models.DateField(null=True, blank=True)
+    visit_streak = models.PositiveIntegerField(default=0)
+    max_visit_streak = models.PositiveIntegerField(default=0)
+
     def save(self, *args, **kwargs):
         if not self.pk:
 

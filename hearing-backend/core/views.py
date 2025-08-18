@@ -1,6 +1,7 @@
 from rest_framework import generics, status, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import AuthenticationFailed
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
@@ -93,6 +94,36 @@ class QuestionsView(APIView):
         qs = Question.objects.prefetch_related('options').all()
         data = QuestionSerializer(qs, many=True).data
         return Response({ 'questions': data })
+
+
+class StreakView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            participant = Participant.objects.get(user=request.user)
+        except Participant.DoesNotExist:
+            return Response({'detail': 'Участник не найден.'}, status=status.HTTP_404_NOT_FOUND)
+
+        streak = participant.visit_streak or 0
+        max_streak = participant.max_visit_streak or 0
+        last_date = participant.last_visit_date
+        group = participant.study_group
+
+        # Test days depend on assigned study group: 15-day group => [1, 15]; 30-day group => [1, 15, 30]
+        test_days = [1, 15] if group == 15 else [1, 15, 30]
+        is_test_day = (streak in test_days) and streak > 0
+        next_test_day = next((d for d in test_days if d > streak), None)
+
+        return Response({
+            'streak': streak,
+            'max_streak': max_streak,
+            'last_visit_date': str(last_date) if last_date else None,
+            'study_group': group,
+            'test_days': test_days,
+            'is_test_day': is_test_day,
+            'next_test_day': next_test_day,
+        })
 
 
 class TelegramAuthView(APIView):
