@@ -14,6 +14,7 @@ import {
 } from "@/app/tests/page.styled";
 import ProgressBar from "@/components/UI/ProgressBar";
 import Reception from "@/components/UI/Reception";
+import {NetworkService} from "@/api/request";
 
 type Option = {
     id: number,
@@ -41,9 +42,17 @@ const QuestionsForm = () => {
 
     // Работа с беком
     useEffect(() => {
-        fetch('http://localhost:3000/questions.json')
-            .then((response) => response.json())
-            .then((data) => setQuestions(data.questions));
+        const fetchData = async () =>{
+            try{
+                const res = await NetworkService.questions();
+                setQuestions(res.data.questions);
+            }catch(err){
+                console.log(err);
+                setQuestions([])
+            }
+        }
+
+        fetchData();
     }, []);
     const handleSubmit = () => {
         console.log(answers)

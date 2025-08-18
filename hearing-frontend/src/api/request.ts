@@ -1,5 +1,7 @@
  import axios, { AxiosResponse } from "axios";
 
+ axios.defaults.withCredentials = true;
+
 export class NetworkService {
     static createAxiosInstance() {
         return axios.create({
@@ -19,6 +21,14 @@ export class NetworkService {
         try {
             const axiosInstance = this.createAxiosInstance();
             return await axiosInstance.post('/login/', data);
+        } catch (error: any) {
+            return error.response;
+        }
+    }
+    static async questions(): Promise<AxiosResponse> {
+        try {
+            const axiosInstance = this.createAxiosInstance();
+            return await axiosInstance.get('/questions/');
         } catch (error: any) {
             return error.response;
         }

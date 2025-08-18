@@ -1,6 +1,6 @@
 {
-  "/neuroexercise/page": "app/neuroexercise/page.js",
+  "/(auth)/login/page": "app/(auth)/login/page.js",
+  "/(auth)/register/page": "app/(auth)/register/page.js",
   "/page": "app/page.js",
-  "/start/page": "app/start/page.js",
-  "/video/page": "app/video/page.js"
+  "/start/page": "app/start/page.js"
 }
