@@ -12,6 +12,8 @@ const Wrapper = styled.div`
     justify-content: center;
     align-items: center;
     flex-direction: column;
+    height: 100%;
+    transition: height .4s ease;
     h2{
         font-family: var(--font-montserrat);
         font-weight: 800;

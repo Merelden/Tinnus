@@ -16,6 +16,9 @@ export const TitleTest = styled.div`
     flex-direction: column;
     gap: 16px;
     width: 100%;
+    h2{
+        text-align: start;
+    }
 `
 export const FormTest = styled.form`
     display: flex;

@@ -24,7 +24,7 @@ export default function StartPage() {
         console.log('erg');
         openModal(
             <div>
-                <h2>Привет!!</h2>
+                <h2>Привкпет!!</h2>
             </div>
         )
     }

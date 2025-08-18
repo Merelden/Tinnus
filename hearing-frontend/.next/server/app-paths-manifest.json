@@ -1,0 +1,6 @@
+{
+  "/neuroexercise/page": "app/neuroexercise/page.js",
+  "/page": "app/page.js",
+  "/start/page": "app/start/page.js",
+  "/video/page": "app/video/page.js"
+}

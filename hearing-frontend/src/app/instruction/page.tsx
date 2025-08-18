@@ -6,7 +6,6 @@ import {
     CardInstruction,
     CardsInstruction,
     NoteInstruction,
-    noteInstruction,
     TitleInstruction
 } from "@/app/instruction/page.styled";
 import SubmitButton from "@/components/UI/SubmitButton";
