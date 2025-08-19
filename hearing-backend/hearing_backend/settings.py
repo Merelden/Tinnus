@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 
+from django.conf.global_settings import CSRF_COOKIE_HTTPONLY, SESSION_COOKIE_HTTPONLY
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -25,7 +27,7 @@ SECRET_KEY = 'django-insecure-w$g6o1c2tn32h%r_!qyk6ig$o2-3cweevm-+pc3khd=gx!#q_2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 # Application definition
@@ -76,9 +78,17 @@ CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:8000',
 ]
 
-CORS_ALLOWED_HOSTS = [
-    'localhost',
+# Для кросс-доменных POST/PUT/PATCH запросов с сессиями нужно доверять фронтенд-источникам
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
 ]
+
+
 
 LANGUAGE_CODE = 'ru'
 
@@ -163,13 +173,16 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Django REST Framework configuration: use JWT authentication only
+# Django REST Framework configuration: use SessionAuthentication + CSRF
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ),
 }
 
+SETTINGS_COOKIE_HTTPONLY = False
+CSRF_COOKIE_HTTPONLY = False
+SESSION_COOKIE_HTTPONLY = True
 # Telegram Login Widget
 TELEGRAM_BOT_TOKEN = '7993827778:AAFb8m1ZBnLlu-Kn3LqraQSQFNO-RmA7qfs'
 TELEGRAM_LOGIN_MAX_AGE = 86400
