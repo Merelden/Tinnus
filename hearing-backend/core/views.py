@@ -136,9 +136,14 @@ class SubmitTestView(APIView):
         if not isinstance(answers, list):
             return Response({'answers': ['Ожидается список ответов.']}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Заранее загрузим все вопросы по id
+        # Заранее загрузим все вопросы и опции
         qids = [a.get('question') for a in answers if isinstance(a, dict) and 'question' in a]
-        qs = {q.id: q for q in Question.objects.filter(id__in=qids)}
+        qs = {q.id: q for q in Question.objects.filter(id__in=qids).prefetch_related('options')}
+
+        # Для каждой опции построим маппинг native_id -> label
+        options_map = {}
+        for q in qs.values():
+            options_map[q.id] = {opt.native_id if opt.native_id is not None else (opt.order or 0) + 1: opt.label for opt in q.options.all()}
 
         for a in answers:
             if not isinstance(a, dict):
@@ -149,27 +154,37 @@ class SubmitTestView(APIView):
 
             q = qs.get(qid)
             if not q:
-                # некорректный question id — пропускаем
                 continue
 
-            # Нормализуем выбранные значения к списку строк
+            # Нормализуем выбранные значения к списку целых (нативные id)
             if selected is None:
-                selected_list = []
+                selected_ids = []
             elif isinstance(selected, list):
-                selected_list = [str(x) for x in selected]
+                selected_ids = []
+                for x in selected:
+                    try:
+                        selected_ids.append(int(x))
+                    except (TypeError, ValueError):
+                        pass
             else:
-                selected_list = [str(selected)]
+                try:
+                    selected_ids = [int(selected)]
+                except (TypeError, ValueError):
+                    selected_ids = []
 
-            # Суммируем баллы из labels
+            # Переводим id -> label для подсчёта баллов
+            labels = [options_map.get(q.id, {}).get(sid) for sid in selected_ids]
+            labels = [lbl for lbl in labels if isinstance(lbl, str)]
+
             section = q.section or ''
-            points = sum(self._points_from_label(lbl) for lbl in selected_list)
+            points = sum(self._points_from_label(lbl) for lbl in labels)
             totals[section] += points
             total_score += points
 
             normalized_answers.append({
                 'question': q.id,
                 'section': section,
-                'selected': selected_list,
+                'selected': selected_ids,
                 'input': free_input,
             })
 

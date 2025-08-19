@@ -78,9 +78,18 @@ class ParticipantSerializer(serializers.ModelSerializer):
 
 
 class QuestionOptionSerializer(serializers.ModelSerializer):
+    id = serializers.SerializerMethodField()
+
+    def get_id(self, obj):
+        # Возвращаем нативный ID опции внутри вопроса, если задан, иначе fallback к порядку (1-based)
+        if getattr(obj, 'native_id', None) is not None:
+            return obj.native_id
+        # fallback: order хранится с 0, превращаем в 1..N
+        return (obj.order or 0) + 1
+
     class Meta:
         model = QuestionOption
-        fields = ['label']
+        fields = ['id', 'label']
 
 
 class QuestionSerializer(serializers.ModelSerializer):
