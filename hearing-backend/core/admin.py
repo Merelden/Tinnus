@@ -1,6 +1,6 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin
-from .models import Participant, Progress, Test, Exercise, Question, QuestionOption
+from .models import Participant, Progress, Test, Exercise, Question, QuestionOption, CalmingVideoSegment
 from django.contrib.auth.models import User
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html
@@ -435,6 +435,13 @@ class ExerciseAdmin(ModelAdmin):
     list_display = ('name', 'timecode', 'phase', 'file')
     list_filter = ('phase',)
     search_fields = ('name',)
+
+
+@admin.register(CalmingVideoSegment)
+class CalmingVideoSegmentAdmin(ModelAdmin):
+    list_display = ('phase', 'segment', 'file')
+    list_filter = ('phase',)
+    search_fields = ('file',)
 
 
 class QuestionOptionInline(admin.TabularInline):

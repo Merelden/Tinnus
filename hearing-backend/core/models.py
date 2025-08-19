@@ -84,6 +84,23 @@ class Exercise(models.Model):
         return f"{self.name} (Timecode: {self.timecode})"
 
 
+class CalmingVideoSegment(models.Model):
+    PHASE_CHOICES = (
+        ('early', 'Days 1-5'),
+        ('late', 'Days 6-30'),
+    )
+    phase = models.CharField(max_length=10, choices=PHASE_CHOICES)
+    segment = models.PositiveIntegerField()  # 1..12
+    file = models.FileField(upload_to='calming/')
+
+    class Meta:
+        unique_together = ['phase', 'segment']
+        ordering = ['phase', 'segment']
+
+    def __str__(self):
+        return f"{self.phase} [{self.segment}]"
+
+
 class Question(models.Model):
     TYPE_CHOICES = [
         ('single', 'single'),

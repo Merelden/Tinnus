@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from django.conf import settings
 from django.middleware.csrf import get_token
 from django.utils import timezone
-from .models import Participant, Question, Test
+from .models import Participant, Question, Test, CalmingVideoSegment
 from .serializers import ParticipantSerializer, QuestionSerializer, TestSerializer
 
 import hmac
@@ -15,6 +15,7 @@ import hashlib
 import time
 import re
 from collections import defaultdict
+from django.db.models import Q
 
 
 class RegisterView(generics.CreateAPIView):
@@ -264,6 +265,70 @@ class MyTestByDayView(APIView):
         except Test.DoesNotExist:
             return Response({'detail': f'Результат за день {day} не найден.'}, status=status.HTTP_404_NOT_FOUND)
         return Response(TestSerializer(test).data)
+
+
+class CalmingVideoView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def _resolve_phase(self, participant):
+        today = timezone.localdate()
+        start_date = timezone.localtime(participant.created_at).date() if participant.created_at else today
+        day = (today - start_date).days + 1
+        if day < 1:
+            day = 1
+        if day <= 5:
+            return 'early'
+        # late: 6..15 for group 15, 6..30 for group 30
+        return 'late'
+
+    def _response_for(self, phase: str, segment: int):
+        seg = CalmingVideoSegment.objects.filter(phase=phase, segment=segment).first()
+        if seg and getattr(seg, 'file', None):
+            try:
+                return {'path': seg.file.url}
+            except Exception:
+                pass
+        # Фолбэк: сконструировать путь в соответствии с договоренностью
+        return {'path': f"/videos/{phase}/{segment}.mp4"}
+
+    def get(self, request):
+        # Поддержка прежнего API через query params
+        try:
+            segment = int(request.query_params.get('timestamp'))
+        except (TypeError, ValueError):
+            return Response({'timestamp': ['Ожидается целое число от 1 до 12.']}, status=status.HTTP_400_BAD_REQUEST)
+        if not (1 <= segment <= 12):
+            return Response({'timestamp': ['Ожидается целое число от 1 до 12.']}, status=status.HTTP_400_BAD_REQUEST)
+        group_param = request.query_params.get('group')
+        if group_param in ('early', 'late'):
+            phase = group_param
+        else:
+            try:
+                participant = Participant.objects.get(user=request.user)
+            except Participant.DoesNotExist:
+                return Response({'detail': 'Участник не найден.'}, status=status.HTTP_404_NOT_FOUND)
+            phase = self._resolve_phase(participant)
+        return Response(self._response_for(phase, segment))
+
+    def post(self, request):
+        # JSON: { "timestamp": 1..12, "group": "early"|"late"? }
+        try:
+            segment = int(request.data.get('timestamp'))
+        except (TypeError, ValueError):
+            return Response({'timestamp': ['Ожидается целое число от 1 до 12.']}, status=status.HTTP_400_BAD_REQUEST)
+        if not (1 <= segment <= 12):
+            return Response({'timestamp': ['Ожидается целое число от 1 до 12.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        group_param = request.data.get('group')
+        if group_param in ('early', 'late'):
+            phase = group_param
+        else:
+            try:
+                participant = Participant.objects.get(user=request.user)
+            except Participant.DoesNotExist:
+                return Response({'detail': 'Участник не найден.'}, status=status.HTTP_404_NOT_FOUND)
+            phase = self._resolve_phase(participant)
+        return Response(self._response_for(phase, segment))
 
 
 class TelegramAuthView(APIView):

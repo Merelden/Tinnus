@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import RegisterView, LoginView, TelegramAuthView, QuestionsView, StreakView, CsrfView, SubmitTestView, MyTestsSummaryView, MyTestByDayView, AuthStatusView
+from .views import RegisterView, LoginView, TelegramAuthView, QuestionsView, StreakView, CsrfView, SubmitTestView, MyTestsSummaryView, MyTestByDayView, AuthStatusView, CalmingVideoView
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
@@ -26,4 +26,7 @@ urlpatterns = [
     path('tests/submit/', SubmitTestView.as_view(), name='tests_submit'),
     path('tests/mine/', MyTestsSummaryView.as_view(), name='tests_mine'),
     path('tests/mine/<int:day>/', MyTestByDayView.as_view(), name='tests_mine_by_day'),
+
+    # Calming video segment endpoint
+    path('calming/', CalmingVideoView.as_view(), name='calming_video'),
 ]
