@@ -30,6 +30,7 @@ const StyledButton = styled.button<{$width: number, $height: number, $primary: b
     &:disabled {
         background-color: ${lightGrayColor};
         color: ${blackColor};
+        cursor: auto;
     }
 `
 

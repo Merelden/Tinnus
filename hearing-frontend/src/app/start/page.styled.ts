@@ -36,5 +36,7 @@ export const RoundIcon = styled.div`
     width: 124px;
     height: 124px;
     border-radius: 50%;
-    
+    img{
+        margin-left: 10px;
+    }
 `

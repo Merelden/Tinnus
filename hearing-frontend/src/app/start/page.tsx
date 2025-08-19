@@ -9,7 +9,7 @@ import {ReceptionCondition, RoundIcon, StartSection} from "@/app/start/page.styl
 import Image from "next/image";
 import {useModal} from "@/providers/ModalProvider";
 import {useRouter} from "next/navigation";
-
+import PdfViewer from "@/components/UI/PdfViewer";
 
 export default function StartPage() {
     const [isReception, setIsReception] = useState(false);
@@ -20,12 +20,9 @@ export default function StartPage() {
         route.push('/tests')
     }
 
-    const handleConfirmModal = () => {
-        console.log('erg');
+    const handleConfirmModal = async () => {
         openModal(
-            <div>
-                <h2>Привкпет!!</h2>
-            </div>
+            <PdfViewer pdfUrl={'/test.pdf'} />
         )
     }
 
@@ -48,7 +45,7 @@ export default function StartPage() {
                         <Reception isReception={isReception} setIsReception={setIsReception}  />
                         <p>Я принимаю <button onClick={handleConfirmModal}>правила использования</button></p>
                     </ReceptionCondition>
-                    <SubmitButton width={412} height={50} label={'Продолжить'} disabled={!isReception} primary onClick={handleNext} />
+                    <SubmitButton width={300} height={50} label={'Продолжить'} disabled={!isReception} primary onClick={handleNext} />
 
                 </StartSection>
             </WindowBlock>

@@ -41,7 +41,7 @@ const Modal = () => {
         <ModalOverlay>
             <ModalContent>
                 {modalContent}
-                <SubmitButton width={200} height={45} label={'Закрыть'} onClick={closeModal} />
+                <SubmitButton width={200} height={45} label={'Закрыть'} onClick={closeModal} marginTop={24} primary />
             </ModalContent>
         </ModalOverlay>
     );

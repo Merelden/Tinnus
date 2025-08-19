@@ -1,6 +1,8 @@
  import axios, { AxiosResponse } from "axios";
 
  axios.defaults.withCredentials = true;
+ axios.defaults.xsrfCookieName = "csrftoken";
+ axios.defaults.xsrfHeaderName = 'X-CSRFToken';
 
 export class NetworkService {
     static createAxiosInstance() {
@@ -9,6 +11,7 @@ export class NetworkService {
         });
     }
 
+    // Авторизация
     static async register(data: object): Promise<AxiosResponse> {
         try {
             const axiosInstance = this.createAxiosInstance();
@@ -25,6 +28,25 @@ export class NetworkService {
             return error.response;
         }
     }
+    static async csrf(): Promise<AxiosResponse> {
+        try {
+            const axiosInstance = this.createAxiosInstance();
+            return await axiosInstance.get('/csrf/');
+        } catch (error: any) {
+            return error.response;
+        }
+    }
+    static async streak(): Promise<AxiosResponse> {
+        try {
+            const axiosInstance = this.createAxiosInstance();
+            return await axiosInstance.get('/streak/');
+        } catch (error: any) {
+            return error.response;
+        }
+    }
+
+
+    // Логика приложения
     static async questions(): Promise<AxiosResponse> {
         try {
             const axiosInstance = this.createAxiosInstance();

@@ -22,6 +22,7 @@ export default function AuthPage() {
         e.preventDefault();
         setErrors(null)
         try {
+            await NetworkService.csrf();
             const res = await NetworkService.login({
                 email: email,
                 password: password
@@ -36,7 +37,7 @@ export default function AuthPage() {
                 console.log(parsedErrors);
             }
             if (res.status === 200) {
-                router.push("/start");
+                router.push("/video");
             }
         } catch (err) {
             console.error(err);
