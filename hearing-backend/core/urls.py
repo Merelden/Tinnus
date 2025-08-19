@@ -1,16 +1,14 @@
 from django.urls import path
 
-from .views import RegisterView, LoginView, EmailTokenObtainPairView, TelegramAuthView, QuestionsView, StreakView
-from rest_framework_simplejwt.views import TokenRefreshView
+from .views import RegisterView, LoginView, TelegramAuthView, QuestionsView, StreakView, CsrfView, SubmitTestView, MyTestsSummaryView, MyTestByDayView
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
-    # Legacy session login (not used with JWT, kept for compatibility):
+    # Session login endpoint:
     path('login/', LoginView.as_view(), name='login'),
 
-    # JWT endpoints:
-    path('token/', EmailTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    # CSRF endpoint
+    path('csrf/', CsrfView.as_view(), name='csrf'),
 
     # Telegram Login Widget endpoint
     path('auth/telegram/', TelegramAuthView.as_view(), name='telegram_auth'),
@@ -20,4 +18,9 @@ urlpatterns = [
 
     # Streak endpoint
     path('streak/', StreakView.as_view(), name='streak'),
+
+    # Tests endpoints
+    path('tests/submit/', SubmitTestView.as_view(), name='tests_submit'),
+    path('tests/mine/', MyTestsSummaryView.as_view(), name='tests_mine'),
+    path('tests/mine/<int:day>/', MyTestByDayView.as_view(), name='tests_mine_by_day'),
 ]

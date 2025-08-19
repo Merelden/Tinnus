@@ -1,19 +1,15 @@
 from django.utils import timezone
 from django.db import transaction
 
-try:
-    # SimpleJWT authentication to extract user from JWT when session auth is not used
-    from rest_framework_simplejwt.authentication import JWTAuthentication
-except Exception:  # pragma: no cover
-    JWTAuthentication = None
 
 from django.apps import apps
 
 
 class VisitStreakMiddleware:
     """
-    Tracks how many consecutive days a user visits the app.
-    Works with both session auth (request.user) and JWT (Authorization header).
+    Tracks user last visit date and keeps historical visit streak fields for compatibility.
+    Authentication: session-based only (request.user). No JWT support.
+    Note: Business logic for "streak" in API responses is now based on registration date, not consecutive visits.
     Stores data per Participant:
       - last_visit_date (date)
       - visit_streak (int)
@@ -22,23 +18,11 @@ class VisitStreakMiddleware:
 
     def __init__(self, get_response):
         self.get_response = get_response
-        self.jwt_auth = JWTAuthentication() if JWTAuthentication is not None else None
 
     def __call__(self, request):
         user = getattr(request, 'user', None)
-
-        # If not authenticated via session, try JWT
-        if not (user and user.is_authenticated) and self.jwt_auth is not None:
-            try:
-                auth_res = self.jwt_auth.authenticate(request)
-                if auth_res is not None:
-                    user, _ = auth_res
-            except Exception:
-                user = None
-
         if user and getattr(user, 'is_authenticated', False):
             self._update_visit_streak(user_id=user.id)
-
         response = self.get_response(request)
         return response
 

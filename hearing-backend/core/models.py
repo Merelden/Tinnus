@@ -63,7 +63,13 @@ class Test(models.Model):
     participant = models.ForeignKey(Participant, on_delete=models.CASCADE)
     day = models.PositiveIntegerField()
     answers = models.JSONField()
+    # Храним суммарные баллы и разбивку по разделам для быстрого доступа
+    total_score = models.IntegerField(default=0)
+    scores_by_section = models.JSONField(default=dict)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['participant', 'day']
 
     def __str__(self):
         return f"Test for {self.participant.full_name} on day {self.day}"
@@ -87,6 +93,8 @@ class Question(models.Model):
     text = models.TextField()
     type = models.CharField(max_length=20, choices=TYPE_CHOICES)
     input_text = models.TextField(blank=True, null=True)
+    # Раздел (категория) для последующей агрегации баллов
+    section = models.CharField(max_length=100, blank=True, default='')
 
     class Meta:
         ordering = ['id']

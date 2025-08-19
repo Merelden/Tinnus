@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction, IntegrityError
-from .models import Participant, Question, QuestionOption
+from .models import Participant, Question, QuestionOption, Test
 
 class UserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField()
@@ -87,7 +87,14 @@ class QuestionSerializer(serializers.ModelSerializer):
     question = serializers.CharField(source='text')
     input = serializers.CharField(source='input_text', allow_null=True, required=False)
     options = QuestionOptionSerializer(many=True)
+    section = serializers.CharField()
 
     class Meta:
         model = Question
-        fields = ['id', 'question', 'type', 'options', 'input']
+        fields = ['id', 'question', 'type', 'options', 'input', 'section']
+
+
+class TestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Test
+        fields = ['day', 'answers', 'total_score', 'scores_by_section', 'created_at']
