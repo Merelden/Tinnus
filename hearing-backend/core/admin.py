@@ -6,6 +6,7 @@ from django.utils.safestring import mark_safe
 from django.utils.html import format_html
 from django.http import HttpResponse
 from django.contrib import messages
+from django.utils import timezone
 import csv
 
 try:
@@ -38,7 +39,7 @@ class TestAdmin(ModelAdmin):
     list_filter = ('day',)
     search_fields = ('participant__full_name',)
     readonly_fields = ('created_at', 'section_scores_human', 'answers_human')
-    actions = ('export_tests_csv_by_sections', 'export_tests_xlsx_by_sections')
+    actions = ('export_tests_csv_by_sections', 'export_tests_xlsx_by_sections', 'export_tests_xlsx_full')
 
     fieldsets = (
         ('Основное', {
@@ -139,6 +140,113 @@ class TestAdmin(ModelAdmin):
         data = dataset.export('xlsx')
         response = HttpResponse(data, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = 'attachment; filename=tests_by_sections.xlsx'
+        return response
+
+    def _build_questions_index(self, tests_queryset):
+        # Собираем уникальные id вопросов из ответов
+        qids = set()
+        for t in tests_queryset:
+            answers = getattr(t, 'answers', None)
+            if isinstance(answers, list):
+                for a in answers:
+                    if isinstance(a, dict) and a.get('question') is not None:
+                        qids.add(a.get('question'))
+        q_map = {}
+        if qids:
+            qs = Question.objects.filter(id__in=list(qids)).prefetch_related('options')
+            for q in qs:
+                options = {}
+                for opt in q.options.all():
+                    native_or_order = opt.native_id if opt.native_id is not None else (opt.order or 0) + 1
+                    options[native_or_order] = opt.label
+                q_map[q.id] = {
+                    'text': q.text,
+                    'number': getattr(q, 'number', None),
+                    'section': q.section,
+                    'options': options,
+                }
+        return q_map
+
+    @admin.action(description='Экспорт Excel (подробно: баллы + ответы)')
+    def export_tests_xlsx_full(self, request, queryset):
+        if not TABLIB_AVAILABLE:
+            self.message_user(request, 'tablib недоступен: Excel экспорт невозможен. Установите tablib/xlsxwriter.', level=messages.ERROR)
+            return None
+
+        # Соберем множество всех разделов для сводки
+        sections = []
+        seen = set()
+        for obj in queryset:
+            if isinstance(obj.scores_by_section, dict):
+                for key in obj.scores_by_section.keys():
+                    if key not in seen:
+                        seen.add(key)
+                        sections.append(key)
+
+        # Подготовим индексы вопросов и опций
+        tests = list(queryset.select_related('participant').order_by('participant__full_name', 'day', 'id'))
+        q_index = self._build_questions_index(tests)
+
+        # Сводка по тестам
+        summary = tablib.Dataset()
+        summary.title = 'Сводка'
+        summary.headers = ['Участник', 'Email', 'Группа', 'День', 'Итого баллов'] + sections + ['Дата теста']
+        for t in tests:
+            participant = getattr(t, 'participant', None)
+            full_name = getattr(participant, 'full_name', str(participant))
+            email = getattr(participant, 'email', '')
+            group = getattr(participant, 'study_group', '')
+            row = [full_name, email, group, t.day, t.total_score]
+            scores = t.scores_by_section or {}
+            row.extend([scores.get(sec, 0) for sec in sections])
+            created_at = getattr(t, 'created_at', None)
+            if created_at:
+                try:
+                    dt_local = timezone.localtime(created_at)
+                except Exception:
+                    dt_local = created_at
+                try:
+                    dt_naive = timezone.make_naive(dt_local)
+                except Exception:
+                    dt_naive = dt_local.replace(tzinfo=None) if getattr(dt_local, 'tzinfo', None) else dt_local
+                row.append(dt_naive)
+            else:
+                row.append('')
+            summary.append(row)
+
+        # Детальные ответы
+        details = tablib.Dataset()
+        details.title = 'Ответы'
+        details.headers = ['Участник', 'Email', 'Группа', 'День', '№', 'Вопрос', 'Раздел', 'Выбрано', 'Свободный ввод']
+        for t in tests:
+            participant = getattr(t, 'participant', None)
+            full_name = getattr(participant, 'full_name', str(participant))
+            email = getattr(participant, 'email', '')
+            group = getattr(participant, 'study_group', '')
+            answers = getattr(t, 'answers', None) or []
+            for a in answers:
+                if not isinstance(a, dict):
+                    continue
+                qid = a.get('question')
+                q = q_index.get(qid)
+                q_text = q['text'] if q else f'Вопрос {qid}'
+                q_no = q['number'] if q and q['number'] is not None else qid
+                section = a.get('section') or (q['section'] if q else '')
+                selected_ids = a.get('selected') or []
+                labels = []
+                if q:
+                    for sid in selected_ids:
+                        lbl = q['options'].get(sid)
+                        if isinstance(lbl, str):
+                            labels.append(lbl)
+                selected_str = ', '.join(labels) if labels else '—'
+                free_input = a.get('input') or ''
+                details.append([full_name, email, group, t.day, q_no, q_text, section, selected_str, free_input])
+
+        book = tablib.Databook([summary, details])
+        data = book.export('xlsx')
+        response = HttpResponse(data, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename=tests_full.xlsx'
         return response
 
     @admin.display(description='Баллы по разделам')
