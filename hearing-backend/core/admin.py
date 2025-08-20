@@ -39,7 +39,12 @@ class TestAdmin(ModelAdmin):
     list_filter = ('day',)
     search_fields = ('participant__full_name',)
     readonly_fields = ('created_at', 'section_scores_human', 'answers_human')
-    actions = ('export_tests_csv_by_sections', 'export_tests_xlsx_by_sections', 'export_tests_xlsx_full')
+    actions = (
+        'export_tests_csv_by_sections',
+        'export_tests_xlsx_by_sections',
+        'export_tests_xlsx_full',
+        'export_research_xlsx',
+    )
 
     fieldsets = (
         ('Основное', {
@@ -247,6 +252,119 @@ class TestAdmin(ModelAdmin):
         data = book.export('xlsx')
         response = HttpResponse(data, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = 'attachment; filename=tests_full.xlsx'
+        return response
+
+    @admin.action(description='Экспорт XLSX (исследование: по дням, админ+код+ответы+баллы)')
+    def export_research_xlsx(self, request, queryset):
+        if not TABLIB_AVAILABLE:
+            self.message_user(request, 'tablib недоступен: Excel экспорт невозможен. Установите tablib/xlsxwriter.', level=messages.ERROR)
+            return None
+
+        tests = list(queryset.select_related('participant').order_by('participant__full_name', 'day', 'id'))
+        if not tests:
+            self.message_user(request, 'Нет данных для экспорта.', level=messages.WARNING)
+            return None
+
+        q_index = self._build_questions_index(tests)
+
+        # Группируем по дню
+        by_day = {1: [], 15: [], 30: []}
+        for t in tests:
+            if t.day in by_day:
+                by_day[t.day].append(t)
+
+        sheets = []
+        for day in (1, 15, 30):
+            day_tests = by_day.get(day) or []
+            if not day_tests:
+                # Можно пропускать пустые вкладки
+                continue
+
+            # Собираем порядок вопросов для этого дня (по номеру, затем по id)
+            qids_set = set()
+            for t in day_tests:
+                answers = getattr(t, 'answers', []) or []
+                for a in answers:
+                    if isinstance(a, dict) and a.get('question') is not None:
+                        qids_set.add(a.get('question'))
+            qids = list(qids_set)
+            qids.sort(key=lambda qid: (q_index.get(qid, {}).get('number') or 9999, qid))
+
+            # Секции для итогов (объединение)
+            sections = []
+            seen = set()
+            for t in day_tests:
+                scores = getattr(t, 'scores_by_section', None) or {}
+                for sec in scores.keys():
+                    if sec not in seen:
+                        seen.add(sec)
+                        sections.append(sec)
+
+            # Шапка
+            admin_headers = ['№', 'Код участника', 'ФИО', 'Email', 'Возраст', 'Телефон', 'Группа']
+            question_headers = [f"Q{(q_index.get(qid, {}).get('number') or qid):02d}" for qid in qids]
+            score_headers = ['Итого баллов'] + sections
+
+            ds = tablib.Dataset()
+            ds.title = f'День {day}'
+            ds.headers = admin_headers + question_headers + score_headers
+
+            # Заполнение
+            for i, t in enumerate(day_tests, start=1):
+                p = getattr(t, 'participant', None)
+                code = f"P{getattr(p, 'id', 0):05d}"
+                row = [
+                    i,
+                    code,
+                    getattr(p, 'full_name', ''),
+                    getattr(p, 'email', ''),
+                    getattr(p, 'age', ''),
+                    getattr(p, 'phone', ''),
+                    getattr(p, 'study_group', ''),
+                ]
+
+                # Ответы индексируем по question id
+                a_map = {}
+                answers = getattr(t, 'answers', []) or []
+                for a in answers:
+                    if isinstance(a, dict) and a.get('question') is not None:
+                        a_map[a.get('question')] = a
+
+                # Значения по вопросам
+                for qid in qids:
+                    a = a_map.get(qid)
+                    if not a:
+                        row.append('')
+                        continue
+                    q = q_index.get(qid)
+                    labels = []
+                    if q:
+                        for sid in (a.get('selected') or []):
+                            lbl = q['options'].get(sid)
+                            if isinstance(lbl, str):
+                                labels.append(lbl)
+                    cell = ', '.join(labels) if labels else ''
+                    if a.get('input'):
+                        cell = f"{cell} | Ввод: {a.get('input')}" if cell else f"Ввод: {a.get('input')}"
+                    row.append(cell)
+
+                # Итоги
+                row.append(getattr(t, 'total_score', 0))
+                scores = getattr(t, 'scores_by_section', None) or {}
+                row.extend([scores.get(sec, 0) for sec in sections])
+
+                ds.append(row)
+
+            sheets.append(ds)
+
+        if not sheets:
+            self.message_user(request, 'Нет данных для экспорта.', level=messages.WARNING)
+            return None
+
+        book = tablib.Databook(sheets)
+        data = book.export('xlsx')
+        response = HttpResponse(data, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename=research_export.xlsx'
         return response
 
     @admin.display(description='Баллы по разделам')
