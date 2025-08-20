@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import RegisterView, LoginView, TelegramAuthView, QuestionsView, StreakView, CsrfView, SubmitTestView, MyTestsSummaryView, MyTestByDayView
+from .views import RegisterView, LoginView, TelegramAuthView, QuestionsView, StreakView, CsrfView, SubmitTestView, MyTestsSummaryView, MyTestByDayView, AuthStatusView
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
@@ -9,6 +9,9 @@ urlpatterns = [
 
     # CSRF endpoint
     path('csrf/', CsrfView.as_view(), name='csrf'),
+
+    # Auth status endpoint
+    path('auth/status/', AuthStatusView.as_view(), name='auth_status'),
 
     # Telegram Login Widget endpoint
     path('auth/telegram/', TelegramAuthView.as_view(), name='telegram_auth'),
