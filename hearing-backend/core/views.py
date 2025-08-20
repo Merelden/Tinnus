@@ -75,7 +75,10 @@ class AuthStatusView(APIView):
             except Participant.DoesNotExist:
                 pass
             return Response(data)
-        return Response({'authenticated': False})
+        return Response(
+            {'authenticated': False, 'detail': "Пользователь не авторизован"},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
 
 
 class QuestionsView(APIView):
