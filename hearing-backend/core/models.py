@@ -95,12 +95,15 @@ class Question(models.Model):
     input_text = models.TextField(blank=True, null=True)
     # Раздел (категория) для последующей агрегации баллов
     section = models.CharField(max_length=100, blank=True, default='')
+    # Последовательный номер для отображения без пропусков
+    number = models.PositiveIntegerField(unique=True, null=True, blank=True)
 
     class Meta:
-        ordering = ['id']
+        ordering = ['number', 'id']
 
     def __str__(self):
-        return f"[{self.id}] {self.text[:50]}{'...' if len(self.text) > 50 else ''}"
+        display_no = self.number if self.number is not None else self.id
+        return f"[{display_no}] {self.text[:50]}{'...' if len(self.text) > 50 else ''}"
 
 
 class QuestionOption(models.Model):
