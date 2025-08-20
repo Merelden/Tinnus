@@ -2,6 +2,17 @@ from django.contrib import admin
 from unfold.admin import ModelAdmin
 from .models import Participant, Progress, Test, Exercise, Question, QuestionOption
 from django.contrib.auth.models import User
+from django.utils.safestring import mark_safe
+from django.utils.html import format_html
+from django.http import HttpResponse
+from django.contrib import messages
+import csv
+
+try:
+    import tablib
+    TABLIB_AVAILABLE = True
+except Exception:
+    TABLIB_AVAILABLE = False
 
 @admin.register(Participant)
 class ParticipantAdmin(ModelAdmin):
@@ -23,9 +34,175 @@ class ProgressAdmin(ModelAdmin):
 
 @admin.register(Test)
 class TestAdmin(ModelAdmin):
-    list_display = ('participant', 'day', 'created_at')
+    list_display = ('participant', 'day_badge', 'total_score', 'section_scores_short', 'created_at')
     list_filter = ('day',)
     search_fields = ('participant__full_name',)
+    readonly_fields = ('created_at', 'section_scores_human', 'answers_human')
+    actions = ('export_tests_csv_by_sections', 'export_tests_xlsx_by_sections')
+
+    fieldsets = (
+        ('Основное', {
+            'fields': ('participant', 'day', 'created_at')
+        }),
+        ('Результаты', {
+            'fields': ('section_scores_human',),
+            'description': 'Сумма баллов по разделам и общий итог',
+            'classes': ('collapse',)
+        }),
+        ('Ответы пользователя', {
+            'fields': ('answers_human',),
+            'description': 'Читаемое представление ответов',
+            'classes': ('collapse',)
+        }),
+    )
+
+    @admin.display(description='День', ordering='day')
+    def day_badge(self, obj):
+        day = obj.day
+        color = '#64748b'  # slate
+        if day == 1:
+            color = '#16a34a'  # green
+        elif day == 15:
+            color = '#2563eb'  # blue
+        elif day == 30:
+            color = '#ea580c'  # orange
+        return format_html(
+            '<span style="padding:2px 6px;border-radius:10px;background:{};color:white;font-weight:600;">{}</span>',
+            color, day
+        )
+
+    @admin.display(description='Краткая сводка')
+    def section_scores_short(self, obj):
+        scores = obj.scores_by_section or {}
+        if not isinstance(scores, dict) or not scores:
+            return '—'
+        parts = [f"{k}:{v}" for k, v in scores.items()]
+        s = '; '.join(parts)
+        if len(s) > 80:
+            s = s[:77] + '...'
+        return s
+
+    @admin.action(description='Экспорт CSV (разбивка по разделам)')
+    def export_tests_csv_by_sections(self, request, queryset):
+        # Соберем множество всех разделов в выбранных записях
+        sections = []
+        seen = set()
+        for obj in queryset:
+            if isinstance(obj.scores_by_section, dict):
+                for key in obj.scores_by_section.keys():
+                    if key not in seen:
+                        seen.add(key)
+                        sections.append(key)
+        headers = ['participant', 'day', 'total_score'] + sections
+
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename=tests_by_sections.csv'
+        writer = csv.writer(response)
+        writer.writerow(headers)
+        for obj in queryset.select_related('participant'):
+            row = [
+                getattr(obj.participant, 'full_name', str(obj.participant)),
+                obj.day,
+                obj.total_score,
+            ]
+            scores = obj.scores_by_section or {}
+            row.extend([scores.get(sec, 0) for sec in sections])
+            writer.writerow(row)
+        return response
+
+    @admin.action(description='Экспорт Excel (разбивка по разделам)')
+    def export_tests_xlsx_by_sections(self, request, queryset):
+        if not TABLIB_AVAILABLE:
+            self.message_user(request, 'tablib недоступен: Excel экспорт невозможен. Убедитесь, что установлен django-import-export.', level=messages.ERROR)
+            return None
+        sections = []
+        seen = set()
+        for obj in queryset:
+            if isinstance(obj.scores_by_section, dict):
+                for key in obj.scores_by_section.keys():
+                    if key not in seen:
+                        seen.add(key)
+                        sections.append(key)
+        headers = ['participant', 'day', 'total_score'] + sections
+
+        dataset = tablib.Dataset()
+        dataset.headers = headers
+        for obj in queryset.select_related('participant'):
+            scores = obj.scores_by_section or {}
+            row = [
+                getattr(obj.participant, 'full_name', str(obj.participant)),
+                obj.day,
+                obj.total_score,
+            ] + [scores.get(sec, 0) for sec in sections]
+            dataset.append(row)
+
+        data = dataset.export('xlsx')
+        response = HttpResponse(data, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename=tests_by_sections.xlsx'
+        return response
+
+    @admin.display(description='Баллы по разделам')
+    def section_scores_human(self, obj):
+        scores = obj.scores_by_section or {}
+        if not isinstance(scores, dict) or not scores:
+            return mark_safe('<em>Нет данных</em>')
+        items = ''.join(
+            f'<li><strong>{section}:</strong> {score}</li>'
+            for section, score in scores.items()
+        )
+        total = f'<p><strong>Итого баллов:</strong> {obj.total_score}</p>'
+        return mark_safe(f'<ul>{items}</ul>{total}')
+
+    @admin.display(description='Ответы (читаемо)')
+    def answers_human(self, obj):
+        answers = obj.answers or []
+        if not isinstance(answers, list) or not answers:
+            return mark_safe('<em>Нет ответов</em>')
+
+        # Собираем данные вопросов и опций для отображения меток
+        qids = [a.get('question') for a in answers if isinstance(a, dict) and a.get('question') is not None]
+        qs = {q.id: q for q in Question.objects.filter(id__in=qids).prefetch_related('options')}
+
+        # Маппинг: вопрос -> (native_id или вычисленный порядок) -> label
+        options_map = {}
+        for qid, q in qs.items():
+            options_map[qid] = {}
+            for opt in q.options.all():
+                native_or_order = opt.native_id if opt.native_id is not None else (opt.order or 0) + 1
+                options_map[qid][native_or_order] = opt.label
+
+        items_html = []
+        for a in answers:
+            if not isinstance(a, dict):
+                continue
+            qid = a.get('question')
+            q = qs.get(qid)
+            if q:
+                title = f'[{q.id}] {q.text}'
+                section = a.get('section') or (q.section or '')
+            else:
+                title = f'Вопрос {qid}'
+                section = a.get('section') or ''
+
+            selected_ids = a.get('selected') or []
+            labels = [options_map.get(qid, {}).get(sid) for sid in selected_ids]
+            labels = [lbl for lbl in labels if isinstance(lbl, str)]
+            labels_str = ', '.join(labels) if labels else '—'
+
+            free_input = a.get('input')
+            input_str = f'<div><em>Свободный ввод:</em> {free_input}</div>' if free_input else ''
+
+            items_html.append(
+                f'<li>'
+                f'<div><strong>{title}</strong></div>'
+                f'<div><em>Раздел:</em> {section or "—"}</div>'
+                f'<div><em>Выбрано:</em> {labels_str}</div>'
+                f'{input_str}'
+                f'</li>'
+            )
+
+        html = '<ol>{}</ol>'.format(''.join(items_html))
+        return mark_safe(html)
 
 @admin.register(Exercise)
 class ExerciseAdmin(ModelAdmin):
