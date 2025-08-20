@@ -335,7 +335,7 @@ class TelegramAuthView(APIView):
     """
     Авторизация через Telegram Login Widget.
     Ожидает POST с полями Telegram (id, first_name, last_name, username, photo_url, auth_date, hash).
-    Проверяет подпись, создаёт/находит пользователя tg_<id>, устанавливае�� сессию и возвращает participant (если есть).
+    Проверяет подпись, создаёт/находит пользователя tg_<id>, устанавливает сессию и возвращает participant (если есть).
     """
 
     def post(self, request):
