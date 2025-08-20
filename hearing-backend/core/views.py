@@ -55,6 +55,32 @@ class CsrfView(APIView):
         return Response({'csrftoken': get_token(request)})
 
 
+class AuthStatusView(APIView):
+    def get(self, request):
+        if request.user.is_authenticated:
+            data = {
+                'authenticated': True,
+                'user': {
+                    'id': request.user.id,
+                    'username': request.user.username,
+                    'email': request.user.email,
+                    'first_name': request.user.first_name,
+                    'last_name': request.user.last_name,
+                },
+                'csrftoken': get_token(request),
+            }
+            try:
+                participant = Participant.objects.get(user=request.user)
+                data['participant'] = ParticipantSerializer(participant).data
+            except Participant.DoesNotExist:
+                pass
+            return Response(data)
+        return Response(
+            {'authenticated': False, 'detail': "Пользователь не авторизован"},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
+
 class QuestionsView(APIView):
     def get(self, request):
         """
