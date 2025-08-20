@@ -399,8 +399,8 @@ const QuestionBlock = __TURBOPACK__imported__module__$5b$project$5d2f$node_modul
     justify-content: start;
     align-items: start;
     gap: 12px;
-
     p{
+        text-align: start;
         font-size: 20px;
         font-weight: 400;
         color: ${__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$styles$2f$colors$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["blackColor"]};
@@ -432,6 +432,7 @@ const ButtonTest = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$
     &:disabled{
         background: ${__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$styles$2f$colors$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["lightGrayColor"]};
         color: ${__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$styles$2f$colors$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["blackColor"]};
+        cursor: auto;
     }
 `;
 const TextAreaStyled = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$styled$2d$components$2f$dist$2f$styled$2d$components$2e$esm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].textarea.withConfig({
@@ -818,6 +819,13 @@ class NetworkService {
             return error.response;
         }
     }
+    static async isAuth() {
+        try {
+            return await axiosInstance.get('/auth/status/');
+        } catch (error) {
+            return error.response;
+        }
+    }
     static async streak() {
         try {
             return await axiosInstance.get('/streak/');
@@ -825,10 +833,25 @@ class NetworkService {
             return error.response;
         }
     }
-    // Логика приложения
+    // Тесты
     static async questions() {
         try {
             return await axiosInstance.get('/questions/');
+        } catch (error) {
+            return error.response;
+        }
+    }
+    static async answers(data) {
+        try {
+            return await axiosInstance.post('/tests/submit/', data);
+        } catch (error) {
+            return error.response;
+        }
+    }
+    // Видео
+    static async calming(data) {
+        try {
+            return await axiosInstance.post('/calming/', data);
         } catch (error) {
             return error.response;
         }
@@ -909,26 +932,90 @@ const QuestionsForm = ()=>{
     const [questions, setQuestions] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(0);
     const [answers, setAnswers] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])({});
+    const [interstitialTexts, setInterstitialTexts] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
+    const [isStreakLoaded, setIsStreakLoaded] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
     const router = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRouter"])();
-    const isTest = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$store$2f$streakStore$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isTestDay"])();
-    // Работа с беком
+    const streakDay = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$store$2f$streakStore$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["streak"])();
+    const testDay = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$store$2f$streakStore$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isTestDay"])();
+    // Текстовые вставки
+    const interstitials = {
+        14: {
+            title: "Госпитальная шкала тревоги и депрессии (HADS). Ответьте, пожалуйста, на следующие вопросы:",
+            text: "Часть 1. Тревога. Каждому утверждению соответствуют 4 варианта ответа. Выберите тот из ответов, который соответствует Вашему состоянию:"
+        },
+        21: {
+            title: "Госпитальная шкала тревоги и депрессии (HADS). Ответьте, пожалуйста, на следующие вопросы:",
+            text: "Часть 2. Депрессия. Каждому утверждению соответствуют 4 варианта ответа. Выберите тот из ответов, который соответствует Вашему состоянию:"
+        },
+        28: {
+            title: "Ниже вы найдете 13 утверждений, описывающих различные мысли и чувства, которые могут быть связаны с шумом в ушах у вас.",
+            text: "Шкала катастрофизации тиннитуса (TCS). Шкала катастрофизации тиннитуса направлена на определение мыслей и чувств, которые вы испытываете при ощущении шума в ушах. С помощью данного опросника мы хотим выяснить, какое влияние оказывает шум в ушах на ваше состояние: на настроение, поведение, отношение."
+        }
+    };
+    // 1) Загружаем streak в стор и отмечаем готовность
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
-        const fetchData = async ()=>{
+        let mounted = true;
+        (async ()=>{
             try {
-                // if(!isTest){
-                //     router.push("/instruction");
-                // }else{
+                await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$store$2f$streakStore$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["loadStreak"])();
+                if (mounted) setIsStreakLoaded(true);
+            } catch (err) {
+                console.log(err);
+                if (mounted) setIsStreakLoaded(true);
+            }
+        })();
+        return ()=>{
+            mounted = false;
+        };
+    }, []);
+    // 2) После загрузки streak реагируем на актуальное значение testDay
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
+        if (!isStreakLoaded) return;
+        if (!testDay) {
+            router.push("/instruction");
+            return;
+        }
+        (async ()=>{
+            try {
                 const res = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$api$2f$request$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["NetworkService"].questions();
                 setQuestions(res.data.questions);
             } catch (err) {
                 console.log(err);
                 setQuestions([]);
             }
+        })();
+    }, [
+        isStreakLoaded,
+        testDay,
+        router
+    ]);
+    const handleSubmit = async ()=>{
+        const outAnswers = Object.entries(answers).map(([key, value])=>{
+            const questionId = Number(key);
+            const questionMeta = questions.find((q)=>q.id === questionId);
+            const out = {
+                question: questionId
+            };
+            if (value.selected && value.selected.length > 0) {
+                if (questionMeta?.type === 'single') {
+                    out.selected = value.selected[0];
+                } else if (questionMeta?.type === 'multiple') {
+                    out.selected = value.selected;
+                }
+            }
+            if (value.input && value.input.trim() !== '') {
+                out.input = value.input.trim();
+            }
+            if (out.selected === undefined && !out.input) return null;
+            return out;
+        }).filter((v)=>v !== null);
+        const payload = {
+            day: streakDay,
+            answers: outAnswers
         };
-        fetchData();
-    }, []);
-    const handleSubmit = ()=>{
-        console.log(answers);
+        console.log('Submitting answers payload:', payload);
+        const res = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$api$2f$request$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["NetworkService"].answers(payload);
+        console.log(res);
     };
     // Изменение состояния ответов
     const handleMultipleChange = (qId, optionId, checked)=>{
@@ -968,17 +1055,30 @@ const QuestionsForm = ()=>{
     };
     //Переключение вопросов
     const handlePrevQuestion = ()=>{
+        if (interstitialTexts) {
+            setInterstitialTexts(null);
+            return;
+        }
         if (currentQuestionIndex > 0) {
             setCurrentQuestionIndex(currentQuestionIndex - 1);
         }
     };
     const handleNextQuestion = (e)=>{
         e.preventDefault();
+        const currentQ = questions[currentQuestionIndex];
+        if (currentQ && interstitials[currentQ.id]) {
+            setInterstitialTexts(interstitials[currentQ.id]);
+            return;
+        }
         if (currentQuestionIndex < questions.length - 1) {
-            setCurrentQuestionIndex(currentQuestionIndex + 1);
+            setCurrentQuestionIndex((prev)=>prev + 1);
         } else {
             handleSubmit();
         }
+    };
+    const handleNextFromInterstitial = ()=>{
+        setInterstitialTexts(null);
+        setCurrentQuestionIndex((prev)=>prev + 1);
     };
     // Проверка ответа на вопрос
     const isAnswered = (question)=>{
@@ -996,7 +1096,7 @@ const QuestionsForm = ()=>{
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$UI$2f$WaveSvg$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                 fileName: "[project]/src/app/tests/page.tsx",
-                lineNumber: 126,
+                lineNumber: 201,
                 columnNumber: 13
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$UI$2f$WindowBlock$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -1009,134 +1109,159 @@ const QuestionsForm = ()=>{
                                     currentQuestion: currentQuestionIndex + 1
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/tests/page.tsx",
-                                    lineNumber: 131,
+                                    lineNumber: 206,
                                     columnNumber: 29
                                 }, ("TURBOPACK compile-time value", void 0)),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
-                                    children: currentQuestion.question
+                                    children: !interstitialTexts && currentQuestion.question
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/tests/page.tsx",
-                                    lineNumber: 135,
+                                    lineNumber: 210,
+                                    columnNumber: 29
+                                }, ("TURBOPACK compile-time value", void 0)),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
+                                    children: interstitialTexts && interstitialTexts.title
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/tests/page.tsx",
+                                    lineNumber: 211,
                                     columnNumber: 29
                                 }, ("TURBOPACK compile-time value", void 0))
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/tests/page.tsx",
-                            lineNumber: 130,
+                            lineNumber: 205,
                             columnNumber: 25
                         }, ("TURBOPACK compile-time value", void 0)),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$tests$2f$page$2e$styled$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["FormTest"], {
                             id: "questionForm",
                             onSubmit: handleNextQuestion,
-                            children: [
-                                currentQuestion.type === 'multiple' && currentQuestion.options?.map((opt)=>{
-                                    const selected = answers[currentQuestion.id]?.selected || [];
-                                    return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$tests$2f$page$2e$styled$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["QuestionBlock"], {
-                                        children: [
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$UI$2f$Reception$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
-                                                isReception: selected.includes(opt.id),
-                                                setIsReception: (checked)=>handleMultipleChange(currentQuestion.id, opt.id, checked)
-                                            }, void 0, false, {
-                                                fileName: "[project]/src/app/tests/page.tsx",
-                                                lineNumber: 143,
-                                                columnNumber: 45
-                                            }, ("TURBOPACK compile-time value", void 0)),
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                children: opt.label
-                                            }, void 0, false, {
-                                                fileName: "[project]/src/app/tests/page.tsx",
-                                                lineNumber: 149,
-                                                columnNumber: 45
-                                            }, ("TURBOPACK compile-time value", void 0))
-                                        ]
-                                    }, opt.id, true, {
-                                        fileName: "[project]/src/app/tests/page.tsx",
-                                        lineNumber: 142,
-                                        columnNumber: 41
-                                    }, ("TURBOPACK compile-time value", void 0));
-                                }),
-                                currentQuestion.type === 'single' && currentQuestion.options?.map((opt)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$tests$2f$page$2e$styled$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["QuestionBlock"], {
-                                        children: [
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$UI$2f$Reception$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
-                                                type: "radio",
-                                                isReception: answers[currentQuestion.id]?.selected?.[0] === opt.id,
-                                                setIsReception: (checked)=>checked && handleSingleChange(currentQuestion.id, opt.id)
-                                            }, void 0, false, {
-                                                fileName: "[project]/src/app/tests/page.tsx",
-                                                lineNumber: 156,
-                                                columnNumber: 41
-                                            }, ("TURBOPACK compile-time value", void 0)),
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                children: opt.label
-                                            }, void 0, false, {
-                                                fileName: "[project]/src/app/tests/page.tsx",
-                                                lineNumber: 163,
-                                                columnNumber: 41
-                                            }, ("TURBOPACK compile-time value", void 0))
-                                        ]
-                                    }, opt.id, true, {
-                                        fileName: "[project]/src/app/tests/page.tsx",
-                                        lineNumber: 155,
-                                        columnNumber: 37
-                                    }, ("TURBOPACK compile-time value", void 0))),
-                                currentQuestion.input && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$tests$2f$page$2e$styled$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TextAreaStyled"], {
-                                    placeholder: currentQuestion.input,
-                                    value: answers[currentQuestion.id]?.input || '',
-                                    onChange: (e)=>handleInputChange(currentQuestion.id, e.target.value)
+                            children: interstitialTexts ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$tests$2f$page$2e$styled$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["QuestionBlock"], {
+                                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                    style: {
+                                        cursor: "auto"
+                                    },
+                                    children: interstitialTexts.text
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/tests/page.tsx",
-                                    lineNumber: 167,
-                                    columnNumber: 33
+                                    lineNumber: 216,
+                                    columnNumber: 37
                                 }, ("TURBOPACK compile-time value", void 0))
-                            ]
-                        }, void 0, true, {
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/tests/page.tsx",
+                                lineNumber: 215,
+                                columnNumber: 33
+                            }, ("TURBOPACK compile-time value", void 0)) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Fragment"], {
+                                children: [
+                                    currentQuestion.type === 'multiple' && currentQuestion.options?.map((opt)=>{
+                                        const selected = answers[currentQuestion.id]?.selected || [];
+                                        return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$tests$2f$page$2e$styled$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["QuestionBlock"], {
+                                            children: [
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$UI$2f$Reception$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
+                                                    isReception: selected.includes(opt.id),
+                                                    setIsReception: (checked)=>handleMultipleChange(currentQuestion.id, opt.id, checked)
+                                                }, void 0, false, {
+                                                    fileName: "[project]/src/app/tests/page.tsx",
+                                                    lineNumber: 225,
+                                                    columnNumber: 53
+                                                }, ("TURBOPACK compile-time value", void 0)),
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                    children: opt.label
+                                                }, void 0, false, {
+                                                    fileName: "[project]/src/app/tests/page.tsx",
+                                                    lineNumber: 231,
+                                                    columnNumber: 53
+                                                }, ("TURBOPACK compile-time value", void 0))
+                                            ]
+                                        }, opt.id, true, {
+                                            fileName: "[project]/src/app/tests/page.tsx",
+                                            lineNumber: 224,
+                                            columnNumber: 49
+                                        }, ("TURBOPACK compile-time value", void 0));
+                                    }),
+                                    currentQuestion.type === 'single' && currentQuestion.options?.map((opt)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$tests$2f$page$2e$styled$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["QuestionBlock"], {
+                                            children: [
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$UI$2f$Reception$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
+                                                    type: "radio",
+                                                    isReception: answers[currentQuestion.id]?.selected?.[0] === opt.id,
+                                                    setIsReception: (checked)=>checked && handleSingleChange(currentQuestion.id, opt.id)
+                                                }, void 0, false, {
+                                                    fileName: "[project]/src/app/tests/page.tsx",
+                                                    lineNumber: 238,
+                                                    columnNumber: 49
+                                                }, ("TURBOPACK compile-time value", void 0)),
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                    children: opt.label
+                                                }, void 0, false, {
+                                                    fileName: "[project]/src/app/tests/page.tsx",
+                                                    lineNumber: 245,
+                                                    columnNumber: 49
+                                                }, ("TURBOPACK compile-time value", void 0))
+                                            ]
+                                        }, opt.id, true, {
+                                            fileName: "[project]/src/app/tests/page.tsx",
+                                            lineNumber: 237,
+                                            columnNumber: 45
+                                        }, ("TURBOPACK compile-time value", void 0))),
+                                    currentQuestion.input && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$tests$2f$page$2e$styled$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TextAreaStyled"], {
+                                        placeholder: currentQuestion.input,
+                                        value: answers[currentQuestion.id]?.input || '',
+                                        onChange: (e)=>handleInputChange(currentQuestion.id, e.target.value)
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/tests/page.tsx",
+                                        lineNumber: 249,
+                                        columnNumber: 41
+                                    }, ("TURBOPACK compile-time value", void 0))
+                                ]
+                            }, void 0, true)
+                        }, void 0, false, {
                             fileName: "[project]/src/app/tests/page.tsx",
-                            lineNumber: 137,
+                            lineNumber: 213,
                             columnNumber: 25
                         }, ("TURBOPACK compile-time value", void 0)),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$tests$2f$page$2e$styled$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ButtonsWrapper"], {
                             children: [
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$tests$2f$page$2e$styled$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ButtonTest"], {
                                     onClick: handlePrevQuestion,
-                                    disabled: currentQuestionIndex === 0,
+                                    disabled: currentQuestionIndex === 0 && !interstitialTexts,
                                     children: "Назад"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/tests/page.tsx",
-                                    lineNumber: 176,
+                                    lineNumber: 260,
                                     columnNumber: 29
                                 }, ("TURBOPACK compile-time value", void 0)),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$tests$2f$page$2e$styled$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ButtonTest"], {
                                     $primary: true,
-                                    disabled: !isAnswered(currentQuestion),
-                                    type: "submit",
+                                    disabled: !interstitialTexts && !isAnswered(currentQuestion),
+                                    type: interstitialTexts ? 'button' : 'submit',
+                                    onClick: interstitialTexts ? handleNextFromInterstitial : undefined,
                                     form: "questionForm",
-                                    children: currentQuestionIndex === questions.length - 1 ? 'Отправить' : 'Далее'
+                                    children: currentQuestionIndex === questions.length - 1 && !interstitialTexts ? 'Отправить' : 'Далее'
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/tests/page.tsx",
-                                    lineNumber: 177,
+                                    lineNumber: 261,
                                     columnNumber: 29
                                 }, ("TURBOPACK compile-time value", void 0))
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/tests/page.tsx",
-                            lineNumber: 175,
+                            lineNumber: 259,
                             columnNumber: 25
                         }, ("TURBOPACK compile-time value", void 0))
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/app/tests/page.tsx",
-                    lineNumber: 129,
+                    lineNumber: 204,
                     columnNumber: 21
                 }, ("TURBOPACK compile-time value", void 0))
             }, void 0, false, {
                 fileName: "[project]/src/app/tests/page.tsx",
-                lineNumber: 127,
+                lineNumber: 202,
                 columnNumber: 13
             }, ("TURBOPACK compile-time value", void 0))
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/tests/page.tsx",
-        lineNumber: 125,
+        lineNumber: 200,
         columnNumber: 9
     }, ("TURBOPACK compile-time value", void 0));
 };

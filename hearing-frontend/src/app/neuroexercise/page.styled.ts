@@ -38,6 +38,7 @@ export const InfoWindow = styled.p<{$primary?: boolean}>`
     font-family: var(--font-manrope), serif;
     font-weight: 500;
     padding: 5px 24px;
+    white-space: nowrap;
 `
 export const VideoWrapper = styled.div`
     width: 940px;

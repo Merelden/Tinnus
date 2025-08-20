@@ -85,6 +85,13 @@ export class NetworkService {
             return error.response;
         }
     }
+    static async isAuth (): Promise<AxiosResponse> {
+        try {
+            return await axiosInstance.get('/auth/status/');
+        } catch (error: any) {
+            return error.response;
+        }
+    }
  
     static async streak(): Promise<AxiosResponse> {
         try {
@@ -94,11 +101,26 @@ export class NetworkService {
         }
     }
  
- 
-    // Логика приложения
+    // Тесты
     static async questions(): Promise<AxiosResponse> {
         try {
             return await axiosInstance.get('/questions/');
+        } catch (error: any) {
+            return error.response;
+        }
+    }
+    static async answers(data: object): Promise<AxiosResponse> {
+        try {
+            return await axiosInstance.post('/tests/submit/', data);
+        } catch (error: any) {
+            return error.response;
+        }
+    }
+
+    // Видео
+    static async calming(data: object): Promise<AxiosResponse> {
+        try {
+            return await axiosInstance.post('/calming/', data);
         } catch (error: any) {
             return error.response;
         }

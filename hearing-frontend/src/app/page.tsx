@@ -11,8 +11,24 @@ import {
 import Image from "next/image";
 import ImportanceCard from "@/components/home/ImportanceCard";
 import HowItWorksCard from "@/components/home/HowItWorksCard";
+import {useEffect, useState} from "react";
+import {NetworkService} from "@/api/request";
 
 export default function Home() {
+    const [isAuth, setAuth] = useState(false);
+
+    useEffect(() => {
+        const isAuth = async ()=>{
+            const res = await NetworkService.isAuth();
+            if(res.status===200){
+                setAuth(true)
+            }else{
+                setAuth(false)
+            }
+        }
+        isAuth();
+    }, []);
+
   return (
     <>
         <InitialSection>
@@ -20,8 +36,11 @@ export default function Home() {
                 <Header>
                     <Image width={212} height={75} src="/icons/logo-text.svg" alt={"logo"} className={'logo'} />
                     <ButtonContainer>
-                        <ButtonHome href={'#info'} $width={190}>Узнать больше</ButtonHome>
-                        <ButtonHome href={'/register'} $width={190} $primary>Регистрация</ButtonHome>
+                        <ButtonHome href={'#info'} $width={200}>Узнать больше</ButtonHome>
+                        {isAuth
+                            ? <ButtonHome href={'/instruction'} $width={260} $primary>Начать упражнение</ButtonHome>
+                            : <ButtonHome href={'/register'} $width={190} $primary>Регистрация</ButtonHome>
+                        }
                     </ButtonContainer>
                 </Header>
                 <InitialContent>
@@ -29,7 +48,10 @@ export default function Home() {
                         <h1>Программа<br/>исследования<br/>тиннитуса</h1>
                         <DescriptionHome>Присоединяйтесь к нашему исследованию и помогите улучшить методы диагностики и лечения тиннитуса. Ваше участие важно для нас и для улучшения жизни людей с этим состоянием.</DescriptionHome>
                         <ButtonContainer>
-                            <ButtonHome href={'/register'} $width={210} $primary>Присоединиться</ButtonHome>
+                            {isAuth
+                                ? <ButtonHome href={'/instruction'} $width={260} $primary>Начать упражнение</ButtonHome>
+                                : <ButtonHome href={'/register'} $width={210} $primary>Присоединиться</ButtonHome>
+                            }
                             <ButtonHome href={'#info'} $width={210}>Узнать больше</ButtonHome>
                         </ButtonContainer>
                     </InitialText>
@@ -50,7 +72,10 @@ export default function Home() {
                     <ImportanceCard image={'vrach'} title={'Личное внимание и помощь от профессионалов'} description={'Наши специалисты всегда рядом, чтобы помочь вам на каждом этапе.'} />
                     <ImportanceCard image={'heart-hands'} title={'Рекомендации по улучшению качества жизни'} description={'Вы получите советы, которые помогут вам улучшить ваше состояние в долгосрочной перспективе.'} />
                 </ImportanceCards>
-                <ButtonHome href={'/register'} $width={410} $primary>Присоединиться к иследованию</ButtonHome>
+                {isAuth
+                    ? <ButtonHome href={'/instruction'} $width={410} $primary>Перейти к упражнению</ButtonHome>
+                    : <ButtonHome href={'/register'} $width={410} $primary>Присоединиться к исследованию</ButtonHome>
+                }
             </ImportanceSection>
 
             <HowItWorksSection>
@@ -69,7 +94,10 @@ export default function Home() {
         <Footer>
             <TitleHome>Присоединяйтесь к исследованию</TitleHome>
             <DescriptionHome>Станьте частью программы и помогите улучшить жизнь людей, страдающих от тиннитуса</DescriptionHome>
-            <ButtonHome href={'/register'} $width={330} $primary>Присоединиться</ButtonHome>
+            {isAuth
+                ? <ButtonHome href={'/instruction'} $width={410} $primary>Перейти к упражнению</ButtonHome>
+                : <ButtonHome href={'/register'} $width={410} $primary>Присоединиться</ButtonHome>
+            }
         </Footer>
 
     </>

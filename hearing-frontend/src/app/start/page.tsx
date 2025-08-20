@@ -10,11 +10,13 @@ import Image from "next/image";
 import {useModal} from "@/providers/ModalProvider";
 import {useRouter} from "next/navigation";
 import PdfViewer from "@/components/UI/PdfViewer";
+import {streak, studyGroup} from "@/store/streakStore";
 
 export default function StartPage() {
     const [isReception, setIsReception] = useState(false);
     const {openModal} = useModal();
     const route = useRouter()
+    const totalDays = studyGroup();
 
     const handleNext = () =>{
         route.push('/tests')
@@ -38,7 +40,7 @@ export default function StartPage() {
                     <h2>Добро пожаловать</h2>
                     <p className={'description-start'}>
                         Приветствуем Вас в приложении, разработанном специально для научного исследования.
-                        В течение следующих 15 дней мы приглашаем вас к прохождению диагностического упражнения
+                        В течение следующих {totalDays} дней мы приглашаем вас к прохождению диагностического упражнения
                         и прослушиванию нейроупражнения для снижения симптомов тиннитуса
                     </p>
                     <ReceptionCondition>

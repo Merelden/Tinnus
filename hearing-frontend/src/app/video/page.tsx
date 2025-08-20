@@ -13,6 +13,7 @@ import {
 } from "@/app/video/page.styled";
 import SubmitButton from "@/components/UI/SubmitButton";
 import {useEffect, useRef, useState} from "react";
+import {NetworkService} from "@/api/request";
 
 
 export default function VideoPage() {
@@ -26,13 +27,15 @@ export default function VideoPage() {
     const videoUrl = 'https://www.w3schools.com/html/mov_bbb.mp4';
 
     const handleNext = () =>{
-        router.push('/neuroexercise')
+        router.push(`/neuroexercise?timestamp=${Math.floor(currentTime)}`)
     }
 
     //Управление видео
     const togglePlay = async () => {
         if (!videoRef.current) return;
-        
+
+        const res = await NetworkService.streak();
+        console.log(res);
         try {
             if (videoRef.current.paused) {
                 await videoRef.current.play();

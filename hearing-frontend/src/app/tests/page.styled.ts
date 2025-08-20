@@ -33,8 +33,8 @@ export const QuestionBlock = styled.label`
     justify-content: start;
     align-items: start;
     gap: 12px;
-
     p{
+        text-align: start;
         font-size: 20px;
         font-weight: 400;
         color: ${blackColor};
@@ -60,6 +60,7 @@ export const ButtonTest = styled.button<{$primary?: boolean}>`
     &:disabled{
         background: ${lightGrayColor};
         color: ${blackColor};
+        cursor: auto;
     }
 `
 

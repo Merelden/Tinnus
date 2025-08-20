@@ -725,10 +725,17 @@ class NetworkService {
             return error.response;
         }
     }
-    // Логика приложения
+    // Тесты
     static async questions() {
         try {
             return await axiosInstance.get('/questions/');
+        } catch (error) {
+            return error.response;
+        }
+    }
+    static async answers(data) {
+        try {
+            return await axiosInstance.post('/tests/submit/', data);
         } catch (error) {
             return error.response;
         }

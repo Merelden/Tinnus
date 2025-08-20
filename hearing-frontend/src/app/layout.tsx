@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { Manrope, Montserrat } from 'next/font/google';
 import '../styles/reset.css';
 import ModalProvider from "@/providers/ModalProvider";
+import StreakInit from "@/providers/StreakInit";
 import Modal from "@/components/UI/Modal";
 
 // Подключение шрифтов
@@ -62,6 +63,7 @@ export default function RootLayout({
         <html lang="ru">
         <body className={`${ManropeFont.variable} ${MontserratFont.variable}`}>
             <ModalProvider>
+                <StreakInit />
                 {children}
                 <Modal />
             </ModalProvider>

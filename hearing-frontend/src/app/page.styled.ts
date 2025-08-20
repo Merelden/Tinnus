@@ -25,6 +25,7 @@ export const ContainerHome = styled.section`
 `
 export const ButtonHome = styled(Link)<{$primary?: boolean, $width: number}>`
     height: 48px;
+    text-wrap: nowrap;
     width: ${({ $width }) => $width}px;
     border-radius: 8px;
     background: ${({$primary}) => $primary ? primaryColor : "transparent"};
