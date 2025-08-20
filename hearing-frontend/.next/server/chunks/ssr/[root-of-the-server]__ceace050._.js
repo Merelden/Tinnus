@@ -712,16 +712,66 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib
 __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].defaults.withCredentials = true;
 __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].defaults.xsrfCookieName = "csrftoken";
 __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].defaults.xsrfHeaderName = 'X-CSRFToken';
+function getApiBaseUrl() {
+    const explicit = ("TURBOPACK compile-time falsy", 0) ? "TURBOPACK unreachable" : process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (explicit) return explicit;
+    const host = ("TURBOPACK compile-time falsy", 0) ? "TURBOPACK unreachable" : '127.0.0.1';
+    return `http://${host}:8000/api`;
+}
+const axiosInstance = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].create({
+    baseURL: getApiBaseUrl(),
+    withCredentials: true
+});
+let inMemoryCsrfToken = null;
+function getCookie(name) {
+    const matches = typeof document !== 'undefined' ? document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()\[\]\\\/\+^])/g, '\\$1') + '=([^;]*)')) : null;
+    return matches ? decodeURIComponent(matches[1]) : null;
+}
+axiosInstance.interceptors.request.use((config)=>{
+    const method = (config.method || 'get').toLowerCase();
+    const needsCsrf = [
+        'post',
+        'put',
+        'patch',
+        'delete'
+    ].includes(method);
+    if (needsCsrf) {
+        const token = inMemoryCsrfToken || getCookie('csrftoken');
+        if (token) {
+            if (!config.headers) config.headers = {};
+            config.headers['X-CSRFToken'] = token;
+        }
+    }
+    return config;
+});
+axiosInstance.interceptors.response.use((response)=>response, async (error)=>{
+    const originalConfig = error.config;
+    if (error.response && error.response.status === 403 && !originalConfig?._retry) {
+        try {
+            originalConfig._retry = true;
+            const res = await axiosInstance.get('/csrf/');
+            inMemoryCsrfToken = getCookie('csrftoken') || res?.data?.csrftoken || null;
+            return await axiosInstance.request(originalConfig);
+        } catch (csrfError) {
+            return Promise.reject(csrfError);
+        }
+    }
+    return Promise.reject(error);
+});
 class NetworkService {
-    static createAxiosInstance() {
-        return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].create({
-            baseURL: `http://127.0.0.1:8000/api`
-        });
+    // Токены
+    static async csrf() {
+        try {
+            const res = await axiosInstance.get('/csrf/');
+            inMemoryCsrfToken = getCookie('csrftoken') || res?.data?.csrftoken || null;
+            return res;
+        } catch (error) {
+            return error.response;
+        }
     }
     // Авторизация
     static async register(data) {
         try {
-            const axiosInstance = this.createAxiosInstance();
             return await axiosInstance.post('/register/', data);
         } catch (error) {
             return error.response;
@@ -729,23 +779,13 @@ class NetworkService {
     }
     static async login(data) {
         try {
-            const axiosInstance = this.createAxiosInstance();
             return await axiosInstance.post('/login/', data);
-        } catch (error) {
-            return error.response;
-        }
-    }
-    static async csrf() {
-        try {
-            const axiosInstance = this.createAxiosInstance();
-            return await axiosInstance.get('/csrf/');
         } catch (error) {
             return error.response;
         }
     }
     static async streak() {
         try {
-            const axiosInstance = this.createAxiosInstance();
             return await axiosInstance.get('/streak/');
         } catch (error) {
             return error.response;
@@ -754,7 +794,6 @@ class NetworkService {
     // Логика приложения
     static async questions() {
         try {
-            const axiosInstance = this.createAxiosInstance();
             return await axiosInstance.get('/questions/');
         } catch (error) {
             return error.response;
@@ -801,6 +840,7 @@ function RegisterPage() {
         e.preventDefault();
         setErrors(null);
         try {
+            await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$api$2f$request$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["NetworkService"].csrf();
             const res = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$api$2f$request$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["NetworkService"].register({
                 user: {
                     email: email,
@@ -834,7 +874,7 @@ function RegisterPage() {
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$UI$2f$WaveSvg$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                 fileName: "[project]/src/app/(auth)/register/page.tsx",
-                lineNumber: 61,
+                lineNumber: 62,
                 columnNumber: 13
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$UI$2f$WindowBlock$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -843,7 +883,7 @@ function RegisterPage() {
                         children: "Регистрация"
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/register/page.tsx",
-                        lineNumber: 64,
+                        lineNumber: 65,
                         columnNumber: 17
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -852,7 +892,7 @@ function RegisterPage() {
                             "Пожалуйста, заполните форму для создания аккаунта.",
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("br", {}, void 0, false, {
                                 fileName: "[project]/src/app/(auth)/register/page.tsx",
-                                lineNumber: 67,
+                                lineNumber: 68,
                                 columnNumber: 71
                             }, this),
                             "Если у вас есть аккаунт, ",
@@ -861,14 +901,14 @@ function RegisterPage() {
                                 children: "войдите"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(auth)/register/page.tsx",
-                                lineNumber: 68,
+                                lineNumber: 69,
                                 columnNumber: 46
                             }, this),
                             "."
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/(auth)/register/page.tsx",
-                        lineNumber: 66,
+                        lineNumber: 67,
                         columnNumber: 17
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$auth$292f$page$2e$styled$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["AuthForm"], {
@@ -882,7 +922,7 @@ function RegisterPage() {
                                 onChange: setName
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(auth)/register/page.tsx",
-                                lineNumber: 72,
+                                lineNumber: 73,
                                 columnNumber: 21
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$UI$2f$InputAuth$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -894,7 +934,7 @@ function RegisterPage() {
                                 onChange: setAge
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(auth)/register/page.tsx",
-                                lineNumber: 79,
+                                lineNumber: 80,
                                 columnNumber: 21
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$UI$2f$InputAuth$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -906,7 +946,7 @@ function RegisterPage() {
                                 onChange: setPhone
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(auth)/register/page.tsx",
-                                lineNumber: 87,
+                                lineNumber: 88,
                                 columnNumber: 21
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$UI$2f$InputAuth$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -918,7 +958,7 @@ function RegisterPage() {
                                 onChange: setEmail
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(auth)/register/page.tsx",
-                                lineNumber: 95,
+                                lineNumber: 96,
                                 columnNumber: 21
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$UI$2f$InputAuth$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -930,7 +970,7 @@ function RegisterPage() {
                                 onChange: setPassword
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(auth)/register/page.tsx",
-                                lineNumber: 103,
+                                lineNumber: 104,
                                 columnNumber: 21
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -938,30 +978,30 @@ function RegisterPage() {
                                 children: "Зарегистрироваться"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(auth)/register/page.tsx",
-                                lineNumber: 111,
+                                lineNumber: 112,
                                 columnNumber: 21
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/(auth)/register/page.tsx",
-                        lineNumber: 71,
+                        lineNumber: 72,
                         columnNumber: 17
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$UI$2f$OAuthBtns$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                         fileName: "[project]/src/app/(auth)/register/page.tsx",
-                        lineNumber: 114,
+                        lineNumber: 115,
                         columnNumber: 17
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/(auth)/register/page.tsx",
-                lineNumber: 62,
+                lineNumber: 63,
                 columnNumber: 13
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/(auth)/register/page.tsx",
-        lineNumber: 60,
+        lineNumber: 61,
         columnNumber: 9
     }, this);
 }

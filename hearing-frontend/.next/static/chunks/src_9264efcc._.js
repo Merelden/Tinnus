@@ -638,20 +638,74 @@ var { k: __turbopack_refresh__, m: module } = __turbopack_context__;
 __turbopack_context__.s({
     "NetworkService": ()=>NetworkService
 });
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = /*#__PURE__*/ __turbopack_context__.i("[project]/node_modules/next/dist/build/polyfills/process.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/axios/lib/axios.js [app-client] (ecmascript)");
 ;
 __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].defaults.withCredentials = true;
 __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].defaults.xsrfCookieName = "csrftoken";
 __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].defaults.xsrfHeaderName = 'X-CSRFToken';
-class NetworkService {
-    static createAxiosInstance() {
-        return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].create({
-            baseURL: "http://127.0.0.1:8000/api"
-        });
+function getApiBaseUrl() {
+    const explicit = ("TURBOPACK compile-time truthy", 1) ? window.NEXT_PUBLIC_API_BASE_URL || __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].env.NEXT_PUBLIC_API_BASE_URL : "TURBOPACK unreachable";
+    if (explicit) return explicit;
+    const host = ("TURBOPACK compile-time truthy", 1) ? window.location.hostname : "TURBOPACK unreachable";
+    return "http://".concat(host, ":8000/api");
+}
+const axiosInstance = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].create({
+    baseURL: getApiBaseUrl(),
+    withCredentials: true
+});
+let inMemoryCsrfToken = null;
+function getCookie(name) {
+    const matches = typeof document !== 'undefined' ? document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()\[\]\\\/\+^])/g, '\\$1') + '=([^;]*)')) : null;
+    return matches ? decodeURIComponent(matches[1]) : null;
+}
+axiosInstance.interceptors.request.use((config)=>{
+    const method = (config.method || 'get').toLowerCase();
+    const needsCsrf = [
+        'post',
+        'put',
+        'patch',
+        'delete'
+    ].includes(method);
+    if (needsCsrf) {
+        const token = inMemoryCsrfToken || getCookie('csrftoken');
+        if (token) {
+            if (!config.headers) config.headers = {};
+            config.headers['X-CSRFToken'] = token;
+        }
     }
+    return config;
+});
+axiosInstance.interceptors.response.use((response)=>response, async (error)=>{
+    const originalConfig = error.config;
+    if (error.response && error.response.status === 403 && !(originalConfig === null || originalConfig === void 0 ? void 0 : originalConfig._retry)) {
+        try {
+            var _data, _this;
+            originalConfig._retry = true;
+            const res = await axiosInstance.get('/csrf/');
+            inMemoryCsrfToken = getCookie('csrftoken') || ((_this = res) === null || _this === void 0 ? void 0 : (_data = _this.data) === null || _data === void 0 ? void 0 : _data.csrftoken) || null;
+            return await axiosInstance.request(originalConfig);
+        } catch (csrfError) {
+            return Promise.reject(csrfError);
+        }
+    }
+    return Promise.reject(error);
+});
+class NetworkService {
+    // Токены
+    static async csrf() {
+        try {
+            var _data, _this;
+            const res = await axiosInstance.get('/csrf/');
+            inMemoryCsrfToken = getCookie('csrftoken') || ((_this = res) === null || _this === void 0 ? void 0 : (_data = _this.data) === null || _data === void 0 ? void 0 : _data.csrftoken) || null;
+            return res;
+        } catch (error) {
+            return error.response;
+        }
+    }
+    // Авторизация
     static async register(data) {
         try {
-            const axiosInstance = this.createAxiosInstance();
             return await axiosInstance.post('/register/', data);
         } catch (error) {
             return error.response;
@@ -659,23 +713,21 @@ class NetworkService {
     }
     static async login(data) {
         try {
-            const axiosInstance = this.createAxiosInstance();
             return await axiosInstance.post('/login/', data);
         } catch (error) {
             return error.response;
         }
     }
-    static async csrf() {
+    static async streak() {
         try {
-            const axiosInstance = this.createAxiosInstance();
-            return await axiosInstance.get('/csrf/');
+            return await axiosInstance.get('/streak/');
         } catch (error) {
             return error.response;
         }
     }
+    // Логика приложения
     static async questions() {
         try {
-            const axiosInstance = this.createAxiosInstance();
             return await axiosInstance.get('/questions/');
         } catch (error) {
             return error.response;
@@ -741,7 +793,14 @@ function AuthPage() {
                 console.log(parsedErrors);
             }
             if (res.status === 200) {
-                router.push("/start");
+                var _streakRes_data;
+                const streakRes = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$api$2f$request$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["NetworkService"].streak();
+                const testDay = streakRes === null || streakRes === void 0 ? void 0 : (_streakRes_data = streakRes.data) === null || _streakRes_data === void 0 ? void 0 : _streakRes_data.is_test_day;
+                if (testDay) {
+                    router.push("/test");
+                } else {
+                    router.push("/instruction");
+                }
             }
         } catch (err) {
             console.error(err);
@@ -751,7 +810,7 @@ function AuthPage() {
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$UI$2f$WaveSvg$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                 fileName: "[project]/src/app/(auth)/login/page.tsx",
-                lineNumber: 51,
+                lineNumber: 57,
                 columnNumber: 13
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$auth$292f$page$2e$styled$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["ContentBlock"], {
@@ -762,7 +821,7 @@ function AuthPage() {
                                 children: "Вход в приложение"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(auth)/login/page.tsx",
-                                lineNumber: 54,
+                                lineNumber: 60,
                                 columnNumber: 21
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -771,7 +830,7 @@ function AuthPage() {
                                     "Введите вашу почту и пароль, чтобы продолжить.",
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("br", {}, void 0, false, {
                                         fileName: "[project]/src/app/(auth)/login/page.tsx",
-                                        lineNumber: 56,
+                                        lineNumber: 62,
                                         columnNumber: 71
                                     }, this),
                                     "Если у вас нет аккаунта, ",
@@ -780,14 +839,14 @@ function AuthPage() {
                                         children: "зарегистрируйтесь"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/(auth)/login/page.tsx",
-                                        lineNumber: 57,
+                                        lineNumber: 63,
                                         columnNumber: 50
                                     }, this),
                                     "."
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/(auth)/login/page.tsx",
-                                lineNumber: 55,
+                                lineNumber: 61,
                                 columnNumber: 21
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$auth$292f$page$2e$styled$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["AuthForm"], {
@@ -802,7 +861,7 @@ function AuthPage() {
                                         error: errors === null || errors === void 0 ? void 0 : errors.email
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/(auth)/login/page.tsx",
-                                        lineNumber: 61,
+                                        lineNumber: 67,
                                         columnNumber: 25
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$UI$2f$InputAuth$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
@@ -814,7 +873,7 @@ function AuthPage() {
                                         error: errors === null || errors === void 0 ? void 0 : errors.password
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/(auth)/login/page.tsx",
-                                        lineNumber: 69,
+                                        lineNumber: 75,
                                         columnNumber: 25
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -822,24 +881,24 @@ function AuthPage() {
                                         children: "Войти"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/(auth)/login/page.tsx",
-                                        lineNumber: 77,
+                                        lineNumber: 83,
                                         columnNumber: 25
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/(auth)/login/page.tsx",
-                                lineNumber: 60,
+                                lineNumber: 66,
                                 columnNumber: 21
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$UI$2f$OAuthBtns$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                                 fileName: "[project]/src/app/(auth)/login/page.tsx",
-                                lineNumber: 80,
+                                lineNumber: 86,
                                 columnNumber: 21
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/(auth)/login/page.tsx",
-                        lineNumber: 53,
+                        lineNumber: 59,
                         columnNumber: 17
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$auth$292f$page$2e$styled$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["OtherErrors"], {
@@ -847,19 +906,19 @@ function AuthPage() {
                         children: errors === null || errors === void 0 ? void 0 : errors.detail
                     }, void 0, false, {
                         fileName: "[project]/src/app/(auth)/login/page.tsx",
-                        lineNumber: 83,
+                        lineNumber: 89,
                         columnNumber: 17
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/(auth)/login/page.tsx",
-                lineNumber: 52,
+                lineNumber: 58,
                 columnNumber: 13
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/(auth)/login/page.tsx",
-        lineNumber: 50,
+        lineNumber: 56,
         columnNumber: 9
     }, this);
 }

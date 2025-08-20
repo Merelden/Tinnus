@@ -26,6 +26,7 @@ export default function RegisterPage() {
         e.preventDefault();
         setErrors(null)
         try {
+            await NetworkService.csrf();
             const res = await NetworkService.register({
                 user: {
                     email: email,

@@ -1,5 +1,4 @@
 'use client'
-
 import WaveSvg from "@/components/UI/WaveSvg";
 import Link from "next/link";
 import WindowBlock from "@/components/UI/WindowBlock";
@@ -9,6 +8,7 @@ import {FormEvent, useState} from "react";
 import OAuthBtns from "@/components/UI/OAuthBtns";
 import {NetworkService} from "@/api/request";
 import {useRouter} from "next/navigation";
+import {isTestDay} from "@/store/streakStore";
 
 
 
@@ -17,10 +17,11 @@ export default function AuthPage() {
     const [password, setPassword] = useState('');
     const [errors, setErrors] = useState<{ [key: string]: string } | null>(null);
     const router = useRouter();
+    const isTest = isTestDay();
 
     const auth = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        setErrors(null)
+        setErrors(null);
         try {
             await NetworkService.csrf();
             const res = await NetworkService.login({
@@ -37,7 +38,11 @@ export default function AuthPage() {
                 console.log(parsedErrors);
             }
             if (res.status === 200) {
-                router.push("/video");
+                if(isTest){
+                    router.push("/test");
+                }else{
+                    router.push("/instruction");
+                }
             }
         } catch (err) {
             console.error(err);

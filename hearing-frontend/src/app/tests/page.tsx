@@ -15,6 +15,8 @@ import {
 import ProgressBar from "@/components/UI/ProgressBar";
 import Reception from "@/components/UI/Reception";
 import {NetworkService} from "@/api/request";
+import {isTestDay} from "@/store/streakStore";
+import {useRouter} from "next/navigation";
 
 type Option = {
     id: number,
@@ -39,13 +41,20 @@ const QuestionsForm = () => {
     const [questions, setQuestions] = useState<Question[]>([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [answers, setAnswers] = useState<AnswersState>({});
+    const router = useRouter();
+    const isTest = isTestDay();
+
 
     // Работа с беком
     useEffect(() => {
         const fetchData = async () =>{
             try{
-                const res = await NetworkService.questions();
-                setQuestions(res.data.questions);
+                // if(!isTest){
+                //     router.push("/instruction");
+                // }else{
+                    const res = await NetworkService.questions();
+                    setQuestions(res.data.questions);
+
             }catch(err){
                 console.log(err);
                 setQuestions([])

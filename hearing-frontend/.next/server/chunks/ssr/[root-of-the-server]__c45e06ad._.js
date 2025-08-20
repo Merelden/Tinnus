@@ -746,16 +746,66 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib
 __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].defaults.withCredentials = true;
 __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].defaults.xsrfCookieName = "csrftoken";
 __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].defaults.xsrfHeaderName = 'X-CSRFToken';
+function getApiBaseUrl() {
+    const explicit = ("TURBOPACK compile-time falsy", 0) ? "TURBOPACK unreachable" : process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (explicit) return explicit;
+    const host = ("TURBOPACK compile-time falsy", 0) ? "TURBOPACK unreachable" : '127.0.0.1';
+    return `http://${host}:8000/api`;
+}
+const axiosInstance = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].create({
+    baseURL: getApiBaseUrl(),
+    withCredentials: true
+});
+let inMemoryCsrfToken = null;
+function getCookie(name) {
+    const matches = typeof document !== 'undefined' ? document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()\[\]\\\/\+^])/g, '\\$1') + '=([^;]*)')) : null;
+    return matches ? decodeURIComponent(matches[1]) : null;
+}
+axiosInstance.interceptors.request.use((config)=>{
+    const method = (config.method || 'get').toLowerCase();
+    const needsCsrf = [
+        'post',
+        'put',
+        'patch',
+        'delete'
+    ].includes(method);
+    if (needsCsrf) {
+        const token = inMemoryCsrfToken || getCookie('csrftoken');
+        if (token) {
+            if (!config.headers) config.headers = {};
+            config.headers['X-CSRFToken'] = token;
+        }
+    }
+    return config;
+});
+axiosInstance.interceptors.response.use((response)=>response, async (error)=>{
+    const originalConfig = error.config;
+    if (error.response && error.response.status === 403 && !originalConfig?._retry) {
+        try {
+            originalConfig._retry = true;
+            const res = await axiosInstance.get('/csrf/');
+            inMemoryCsrfToken = getCookie('csrftoken') || res?.data?.csrftoken || null;
+            return await axiosInstance.request(originalConfig);
+        } catch (csrfError) {
+            return Promise.reject(csrfError);
+        }
+    }
+    return Promise.reject(error);
+});
 class NetworkService {
-    static createAxiosInstance() {
-        return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].create({
-            baseURL: `http://127.0.0.1:8000/api`
-        });
+    // Токены
+    static async csrf() {
+        try {
+            const res = await axiosInstance.get('/csrf/');
+            inMemoryCsrfToken = getCookie('csrftoken') || res?.data?.csrftoken || null;
+            return res;
+        } catch (error) {
+            return error.response;
+        }
     }
     // Авторизация
     static async register(data) {
         try {
-            const axiosInstance = this.createAxiosInstance();
             return await axiosInstance.post('/register/', data);
         } catch (error) {
             return error.response;
@@ -763,23 +813,13 @@ class NetworkService {
     }
     static async login(data) {
         try {
-            const axiosInstance = this.createAxiosInstance();
             return await axiosInstance.post('/login/', data);
-        } catch (error) {
-            return error.response;
-        }
-    }
-    static async csrf() {
-        try {
-            const axiosInstance = this.createAxiosInstance();
-            return await axiosInstance.get('/csrf/');
         } catch (error) {
             return error.response;
         }
     }
     static async streak() {
         try {
-            const axiosInstance = this.createAxiosInstance();
             return await axiosInstance.get('/streak/');
         } catch (error) {
             return error.response;
@@ -788,7 +828,6 @@ class NetworkService {
     // Логика приложения
     static async questions() {
         try {
-            const axiosInstance = this.createAxiosInstance();
             return await axiosInstance.get('/questions/');
         } catch (error) {
             return error.response;
