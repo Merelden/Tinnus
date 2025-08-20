@@ -24,10 +24,13 @@ export default function VideoPage() {
     const [isPlaying, setIsPlaying] = useState(false);
     const [videoError, setVideoError] = useState(false);
     const [isVideoReady, setIsVideoReady] = useState(false);
-    const videoUrl = 'https://www.w3schools.com/html/mov_bbb.mp4';
+    const videoUrl = 'http://127.0.0.1:8000/videos/noise.mp4';
 
     const handleNext = () =>{
-        router.push(`/neuroexercise?timestamp=${Math.floor(currentTime)}`)
+        const step = 125 / 12;
+        const result = Math.floor(currentTime/step) + 1;
+        const query = Math.min(Math.max(result, 1), 12)
+        router.push(`/neuroexercise?timestamp=${Math.floor(query)}`)
     }
 
     //Управление видео

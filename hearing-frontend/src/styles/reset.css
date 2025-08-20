@@ -4,6 +4,9 @@
     margin: 0px;
     border: none;
 }
+html{
+    overflow-x: hidden;
+}
 
 *,
 *::before,

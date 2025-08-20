@@ -44,6 +44,7 @@ const SubmitButton = ({label, width=200, height=50, onClick, disabled, primary=f
             disabled={disabled}
             $hidden={hidden}
             $marginTop={marginTop}
+            className={'submit-btn'}
         >
             {label}
         </StyledButton>

@@ -35,12 +35,18 @@ const ProgressStyled = styled.progress`
         background-color: ${primaryColor};
         border-radius: 12px;
     }
+    @media (max-width: 430px) {
+        height: 12px;
+    }
 `;
 const Percent = styled.p`
     font-size: 20px !important;
     color:${textColor};
     font-weight: 700;
     font-family: var(--font-manrope), serif;
+    @media (max-width: 430px) {
+        font-size: 18px !important;
+    }
 `
 
 const ProgressBar = ({totalQuestions, currentQuestion}:IProps) => {

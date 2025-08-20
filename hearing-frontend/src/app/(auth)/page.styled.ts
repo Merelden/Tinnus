@@ -15,9 +15,12 @@ export const BackgroundPage = styled.section`
     }
 
     @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(16px); }
-        to { opacity: 1; transform: translateY(0); }
+        from { opacity: 0; transform: translateY(16px) scale(0.9); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
     }
+    @media (max-width: 500px) {
+        padding: 0;
+    }}
 `
 
 export const AuthForm = styled.form`
@@ -28,6 +31,7 @@ export const AuthForm = styled.form`
     gap: 14px;
     margin: 24px 0;
     z-index: 20;
+    width: 100%;
     button{
         margin-top: 28px;
         background-color: ${primaryColor};
@@ -38,6 +42,15 @@ export const AuthForm = styled.form`
         border-radius: 6px;
         width: 100%;
     }
+    @media (max-width: 500px) {
+        margin: 12px 0;
+        button{
+            height: 45px;
+            font-size: 20px;
+            margin-top: 14px;
+        }
+    }
+
 `
 export const ContentBlock = styled.div`
     position: relative;
@@ -63,4 +76,15 @@ export const OtherErrors = styled.div<{$message: string | undefined}>`
     font-weight: 500;
     font-size: 24px;
     color: ${whiteColor};
+    @media (max-width: 500px) {
+        font-size: 20px;
+        height: ${({$message})=> $message ? "112%" : "100%"};
+        padding: 3.2%;
+    }
+    @media (max-width: 400px) {
+        padding: 3.2%;
+    }
+    @media (max-width: 320px) {
+        padding: 4%;
+    }
 `

@@ -38,7 +38,7 @@ export default function Home() {
                     <ButtonContainer>
                         <ButtonHome href={'#info'} $width={200}>Узнать больше</ButtonHome>
                         {isAuth
-                            ? <ButtonHome href={'/instruction'} $width={260} $primary>Начать упражнение</ButtonHome>
+                            ? <ButtonHome href={'/tests'} $width={260} $primary>Начать упражнение</ButtonHome>
                             : <ButtonHome href={'/register'} $width={190} $primary>Регистрация</ButtonHome>
                         }
                     </ButtonContainer>
@@ -49,7 +49,7 @@ export default function Home() {
                         <DescriptionHome>Присоединяйтесь к нашему исследованию и помогите улучшить методы диагностики и лечения тиннитуса. Ваше участие важно для нас и для улучшения жизни людей с этим состоянием.</DescriptionHome>
                         <ButtonContainer>
                             {isAuth
-                                ? <ButtonHome href={'/instruction'} $width={260} $primary>Начать упражнение</ButtonHome>
+                                ? <ButtonHome href={'/tests'} $width={260} $primary>Начать упражнение</ButtonHome>
                                 : <ButtonHome href={'/register'} $width={210} $primary>Присоединиться</ButtonHome>
                             }
                             <ButtonHome href={'#info'} $width={210}>Узнать больше</ButtonHome>
@@ -73,7 +73,7 @@ export default function Home() {
                     <ImportanceCard image={'heart-hands'} title={'Рекомендации по улучшению качества жизни'} description={'Вы получите советы, которые помогут вам улучшить ваше состояние в долгосрочной перспективе.'} />
                 </ImportanceCards>
                 {isAuth
-                    ? <ButtonHome href={'/instruction'} $width={410} $primary>Перейти к упражнению</ButtonHome>
+                    ? <ButtonHome href={'/tests'} $width={410} $primary>Перейти к упражнению</ButtonHome>
                     : <ButtonHome href={'/register'} $width={410} $primary>Присоединиться к исследованию</ButtonHome>
                 }
             </ImportanceSection>
@@ -95,7 +95,7 @@ export default function Home() {
             <TitleHome>Присоединяйтесь к исследованию</TitleHome>
             <DescriptionHome>Станьте частью программы и помогите улучшить жизнь людей, страдающих от тиннитуса</DescriptionHome>
             {isAuth
-                ? <ButtonHome href={'/instruction'} $width={410} $primary>Перейти к упражнению</ButtonHome>
+                ? <ButtonHome href={'/tests'} $width={410} $primary>Перейти к упражнению</ButtonHome>
                 : <ButtonHome href={'/register'} $width={410} $primary>Присоединиться</ButtonHome>
             }
         </Footer>

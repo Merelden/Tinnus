@@ -43,6 +43,14 @@ const CheckboxWrapper = styled.span`
         opacity: 0;  
         transition: opacity 0.3s ease; 
     }
+    @media (max-width: 500px) {
+        width: 22px;
+        height: 22px;
+    }
+    @media (max-width: 350px) {
+        width: 18px;
+        height: 18px;
+    }
 `;
 
 const Reception = ({ isReception, setIsReception, type }: IProps) => {

@@ -5,7 +5,7 @@ import Link from "next/link";
 import WindowBlock from "@/components/UI/WindowBlock";
 import {AuthForm, BackgroundPage} from "@/app/(auth)/page.styled";
 import InputAuth from "@/components/UI/InputAuth";
-import {FormEvent, useState} from "react";
+import {FormEvent, useEffect, useState} from "react";
 import OAuthBtns from "@/components/UI/OAuthBtns";
 import {NetworkService} from "@/api/request";
 import {useRouter} from "next/navigation";
@@ -22,6 +22,20 @@ export default function RegisterPage() {
     const [errors, setErrors] = useState<{ [key: string]: string } | null>(null);
     const router = useRouter();
 
+    //Проверка на авторизацию
+    useEffect(() => {
+        const fetchAuth = async () =>{
+            const res = await NetworkService.isAuth();
+            if(res.status === 200){
+                router.push('/tests')
+            }else{
+                return;
+            }
+        }
+        fetchAuth()
+    }, []);
+
+    // Регистрируем
     const register = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setErrors(null)
@@ -36,7 +50,6 @@ export default function RegisterPage() {
                 age: age,
                 phone: phone,
             });
-            console.log(res);
             if (res.status === 400) {
                 const parsedErrors = res.data;
                 setErrors({

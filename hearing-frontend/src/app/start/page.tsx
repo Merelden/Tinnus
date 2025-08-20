@@ -34,7 +34,7 @@ export default function StartPage() {
             <WindowBlock>
                 <StartSection>
 
-                    <RoundIcon>
+                    <RoundIcon $marginLeft={10}>
                         <Image src={'/icons/ear.svg'} alt={'ear'} width={128} height={126} />
                     </RoundIcon>
                     <h2>Добро пожаловать</h2>

@@ -17,6 +17,7 @@ const WrapperOr = styled.div`
         font-family: var(--font-manrope), serif;
         color: ${textColor};
         margin-bottom: 8px;
+        width: 50%;
     }
     hr{
         width: 100%;

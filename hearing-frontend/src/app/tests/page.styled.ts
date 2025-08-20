@@ -8,6 +8,24 @@ export const TestSection = styled.div`
     flex-direction: column;
     gap: 32px;
     width: 600px;
+    @media (max-width: 700px) {
+        max-width: 500px;
+        h2{
+            font-size: 30px;
+        }
+    }
+    @media (max-width: 550px) {
+        max-width: 470px;
+        h2{
+            font-size: 26px;
+        }
+    }
+    @media (max-width: 500px) {
+        max-width: 100%;
+        h2{
+            font-size: 24px;
+        }
+    }
 `
 export const TitleTest = styled.div`
     display: flex;
@@ -18,6 +36,7 @@ export const TitleTest = styled.div`
     width: 100%;
     h2{
         text-align: start;
+        text-wrap: auto;
     }
 `
 export const FormTest = styled.form`
@@ -27,11 +46,14 @@ export const FormTest = styled.form`
     flex-direction: column;
     width: 100%;
     gap: 16px;
+    @media (max-width: 700px) {
+        gap: 14px;
+    }
 `
 export const QuestionBlock = styled.label`
     display: flex;
     justify-content: start;
-    align-items: start;
+    align-items: center;
     gap: 12px;
     p{
         text-align: start;
@@ -39,12 +61,34 @@ export const QuestionBlock = styled.label`
         font-weight: 400;
         color: ${blackColor};
     }
+    @media (max-width: 700px) {
+        p{
+            font-size: 18px;
+        }
+    }
+    @media (max-width: 500px) {
+        p{
+            font-size: 16px;
+        }
+    }
 `
 export const ButtonsWrapper = styled.div`
     display: flex;
     justify-content: space-between;
     align-items: center;
     width: 100%;
+    @media (max-width: 700px) {
+        button{
+            font-size: 22px;
+            height: 47px;
+        }
+        button:nth-last-child(1){
+            width: 170px;
+        }
+        button:nth-last-child(2){
+            width: 150px;
+        }
+    }
 `
 export const ButtonTest = styled.button<{$primary?: boolean}>`
     border-radius: 6px;
@@ -77,4 +121,9 @@ export const TextAreaStyled = styled.textarea`
     font-size: 18px;
     font-family: var(--font-manrope), serif;
     color: ${blackColor};
+    @media (max-width: 700px) {
+        font-size: 16px;
+        padding: 10px 8px;
+        height: 90px;
+    }
 `

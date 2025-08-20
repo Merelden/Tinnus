@@ -6,7 +6,7 @@ import {
     CardInstruction,
     CardsInstruction,
     NoteInstruction,
-    TitleInstruction
+    TitleInstruction, WrapperInstruction
 } from "@/app/instruction/page.styled";
 import SubmitButton from "@/components/UI/SubmitButton";
 import {useRouter} from "next/navigation";
@@ -23,6 +23,7 @@ export default function InstructionPage() {
         <BackgroundPage>
             <WaveSvg />
             <WindowBlock>
+                <WrapperInstruction>
                 <TitleInstruction>
                     <h2>Мультсенсорная шумометрия</h2>
                     <p>В рамках исследования приглашаем вас в новое тестирование — аудиовизуальную шумометрию. Вы будете проходить её ежедневно следующие 15 дней.</p>
@@ -46,7 +47,7 @@ export default function InstructionPage() {
                         <h4>3</h4>
                         <div>
                             <h3>Точная навигация</h3>
-                            <p>Чтобы вернуться назад или пройти вперёд, используйте кнопки на 10 секунд назад или на 10 секунд вперёд.</p>
+                            <p>Чтобы вернуться назад или пройти вперёд, используйте кнопки перемотки на 10 секунд влево или вправо соответственно.</p>
                         </div>
                     </CardInstruction>
                 </CardsInstruction>
@@ -54,6 +55,7 @@ export default function InstructionPage() {
                 <NoteInstruction>
                     Обратите внимание: на следующий день шум и цвет могут измениться — это нормально.
                 </NoteInstruction>
+                </WrapperInstruction>
             </WindowBlock>
         </BackgroundPage>
     );

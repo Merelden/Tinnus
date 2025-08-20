@@ -4,7 +4,7 @@ import Link from "next/link";
 import WindowBlock from "@/components/UI/WindowBlock";
 import {AuthForm, BackgroundPage, ContentBlock, OtherErrors} from "@/app/(auth)/page.styled";
 import InputAuth from "@/components/UI/InputAuth";
-import {FormEvent, useState} from "react";
+import {FormEvent, useEffect, useState} from "react";
 import OAuthBtns from "@/components/UI/OAuthBtns";
 import {NetworkService} from "@/api/request";
 import {useRouter} from "next/navigation";
@@ -17,8 +17,21 @@ export default function AuthPage() {
     const [password, setPassword] = useState('');
     const [errors, setErrors] = useState<{ [key: string]: string } | null>(null);
     const router = useRouter();
-    const isTest = isTestDay();
 
+    //Проверка на авторизацию
+    useEffect(() => {
+        const fetchAuth = async () =>{
+            const res = await NetworkService.isAuth();
+            if(res.status === 200){
+                router.push('/tests')
+            }else{
+                return;
+            }
+        }
+        fetchAuth()
+    }, []);
+
+    //Авторизируем
     const auth = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setErrors(null);
@@ -38,11 +51,7 @@ export default function AuthPage() {
                 console.log(parsedErrors);
             }
             if (res.status === 200) {
-                if(isTest){
-                    router.push("/test");
-                }else{
-                    router.push("/instruction");
-                }
+                router.push("/tests");
             }
         } catch (err) {
             console.error(err);

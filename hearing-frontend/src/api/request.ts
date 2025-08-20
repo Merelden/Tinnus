@@ -85,7 +85,7 @@ export class NetworkService {
             return error.response;
         }
     }
-    static async isAuth (): Promise<AxiosResponse> {
+    static async isAuth(): Promise<AxiosResponse> {
         try {
             return await axiosInstance.get('/auth/status/');
         } catch (error: any) {

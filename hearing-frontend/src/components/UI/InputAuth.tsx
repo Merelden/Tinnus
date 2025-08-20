@@ -20,6 +20,9 @@ const Field = styled.div`
     display: flex;
     flex-direction: column;
     gap: 6px;
+    @media (max-width: 500px) {
+        width: 100%;
+    }
 `
 
 const Wrapper = styled.div<{ $hasError?: boolean }>`
@@ -52,6 +55,24 @@ const Wrapper = styled.div<{ $hasError?: boolean }>`
         background: transparent;
         outline: none;
         border: none;
+    }
+    @media (max-width: 500px) {
+        padding: 8px 6px;
+        img{
+            width: 32px;
+        }
+        input{
+            font-size: 18px;
+        }
+    }
+    @media (max-width: 400px) {
+        padding: 6px 6px;
+        img{
+            width: 30px;
+        }
+        input{
+            font-size: 16px;
+        }
     }
 `
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {Children} from 'react';
 import styled from "styled-components";
 import {primaryColor, textColor, whiteColor} from "@/styles/colors";
 
@@ -20,6 +20,7 @@ const Wrapper = styled.div`
         font-size: 32px;
         line-height: 1;
         text-align: center;
+        text-wrap: nowrap;
     }
     p{
         font-family: var(--font-manrope), serif;
@@ -48,10 +49,54 @@ const Wrapper = styled.div`
             }
         }
     }
-    
+    @media (max-width: 700px) {
+        p{
+            &.description-start{
+                width: 100%;
+            }
+        }
+    }
+    @media (max-width: 500px) {
+        width: 100vw;
+        padding: 32px 16px;
+        h2{
+            font-size: 30px;
+        }
+        p{
+            &.description-mini{
+                font-size: 14px;
+                width: 120%;
+                margin-top: 14px;
+            }
+            &.description-start{
+                font-size: 16px;
+            }
+        }
+    }
+    @media (max-width: 400px) {
+        h2{
+            font-size: 28px;
+        }
+        p{
+            &.description-mini{
+                font-size: 12px;
+                margin-top: 12px;
+                width: 120%;
+            }
+            &.description-start{
+                font-size: 14px;
+            }
+        }
+    }
 `
 
 const WindowBlock = ({children}: Readonly<{ children: React.ReactNode }>) => {
+    const isEmpty = Children.count(children) === 0;
+
+    if(isEmpty){
+        return null;
+    }
+
     return (
         <Wrapper className={'content'}>
             {children}

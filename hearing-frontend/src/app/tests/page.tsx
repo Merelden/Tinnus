@@ -122,10 +122,8 @@ const QuestionsForm = () => {
             .filter((v): v is OutAnswer => v !== null);
 
         const payload = { day: streakDay, answers: outAnswers };
-
-        console.log('Submitting answers payload:', payload);
-        const res = await NetworkService.answers(payload);
-        console.log(res);
+        await NetworkService.answers(payload);
+        router.push("/instruction");
     };
 
     // Изменение состояния ответов
@@ -208,7 +206,7 @@ const QuestionsForm = () => {
                                 currentQuestion={currentQuestionIndex + 1}
                             />
                             <h2>{!interstitialTexts && currentQuestion.question}</h2>
-                            <h2>{interstitialTexts && interstitialTexts.title}</h2>
+                            {interstitialTexts && <h2>interstitialTexts.title</h2>}
                         </TitleTest>
                         <FormTest id='questionForm' onSubmit={handleNextQuestion}>
                             {interstitialTexts ? (
