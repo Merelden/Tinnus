@@ -1,4 +1,4 @@
-// File: /Users/sbb/Desktop/Tinnus/hearing-frontend/src/app/instruction/page.tsx
+// File: /var/www/Tinnus/hearing-frontend/src/app/instruction/page.tsx
 import * as entry from '../../../../src/app/instruction/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
