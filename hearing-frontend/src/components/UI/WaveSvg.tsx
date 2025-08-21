@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import styled from 'styled-components';
 
@@ -96,23 +96,24 @@ function poseFromPath(path: string): WavePoseVars {
 
 const WaveSvg: React.FC = () => {
     const pathname = usePathname() || '/';
-    const [vars, setVars] = useState<WavePoseVars>(() => {
-        if (typeof window !== 'undefined') {
-            const prev = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
-            return poseFromPath(prev || pathname);
-        }
-        return poseFromPath(pathname);
-    });
+    const [vars, setVars] = useState<WavePoseVars>(() => poseFromPath(pathname));
 
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            window.sessionStorage.setItem(SESSION_STORAGE_KEY, pathname);
+    useLayoutEffect(() => {
+        if (typeof window === 'undefined') return;
+        const prev = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
+        // Сначала устанавливаем позу предыдущего пути до покраски,
+        // затем в следующий кадр анимируем к текущему
+        if (prev && prev !== pathname) {
+            setVars(poseFromPath(prev));
+            const id = requestAnimationFrame(() => {
+                setVars(poseFromPath(pathname));
+                window.sessionStorage.setItem(SESSION_STORAGE_KEY, pathname);
+            });
+            return () => cancelAnimationFrame(id);
         }
-    }, [pathname]);
-
-    useEffect(() => {
-        const id = requestAnimationFrame(() => setVars(poseFromPath(pathname)));
-        return () => cancelAnimationFrame(id);
+        // Если предыдущего нет — просто применяем текущую и сохраняем
+        setVars(poseFromPath(pathname));
+        window.sessionStorage.setItem(SESSION_STORAGE_KEY, pathname);
     }, [pathname]);
 
     return (

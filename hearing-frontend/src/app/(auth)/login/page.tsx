@@ -1,5 +1,4 @@
 'use client'
-import WaveSvg from "@/components/UI/WaveSvg";
 import Link from "next/link";
 import WindowBlock from "@/components/UI/WindowBlock";
 import {AuthForm, BackgroundPage, ContentBlock, OtherErrors} from "@/app/(auth)/page.styled";
@@ -62,7 +61,6 @@ export default function AuthPage() {
 
     return (
         <BackgroundPage>
-            <WaveSvg />
             <ContentBlock>
                 <WindowBlock>
                     <h2>Вход в приложение</h2>

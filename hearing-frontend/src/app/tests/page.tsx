@@ -1,6 +1,5 @@
 'use client'
 import React, {useState, useEffect, FormEvent} from 'react';
-import WaveSvg from "@/components/UI/WaveSvg";
 import WindowBlock from "@/components/UI/WindowBlock";
 import {BackgroundPage} from "@/app/(auth)/page.styled";
 import {
@@ -196,7 +195,6 @@ const QuestionsForm = () => {
 
     return (
         <BackgroundPage>
-            <WaveSvg />
             <WindowBlock>
                 {currentQuestion && (
                     <TestSection>

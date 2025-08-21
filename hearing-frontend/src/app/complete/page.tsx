@@ -1,5 +1,4 @@
  'use client'
-import WaveSvg from "@/components/UI/WaveSvg";
 import WindowBlock from "@/components/UI/WindowBlock";
 import {BackgroundPage} from "@/app/(auth)/page.styled";
 import SubmitButton from "@/components/UI/SubmitButton";
@@ -24,7 +23,6 @@ export default function CompletePage() {
 
     return (
         <BackgroundPage>
-            <WaveSvg />
             <WindowBlock>
                 <StartSection>
 

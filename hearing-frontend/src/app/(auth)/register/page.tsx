@@ -1,6 +1,5 @@
 'use client'
 
-import WaveSvg from "@/components/UI/WaveSvg";
 import Link from "next/link";
 import WindowBlock from "@/components/UI/WindowBlock";
 import {AuthForm, BackgroundPage} from "@/app/(auth)/page.styled";
@@ -78,7 +77,6 @@ export default function RegisterPage() {
 
     return (
         <BackgroundPage>
-            <WaveSvg />
             <WindowBlock>
 
                 <h2>Регистрация</h2>

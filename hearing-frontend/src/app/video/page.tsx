@@ -1,5 +1,4 @@
 'use client'
-import WaveSvg from "@/components/UI/WaveSvg";
 import WindowBlock from "@/components/UI/WindowBlock";
 import {BackgroundPage} from "@/app/(auth)/page.styled";
 import {useRouter} from "next/navigation";
@@ -163,7 +162,6 @@ export default function VideoPage() {
 
     return (
         <BackgroundPage>
-            <WaveSvg />
             <WindowBlock>
                 <WrapperWindowVide>
                 <TitleInstruction>

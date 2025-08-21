@@ -1,8 +1,7 @@
 'use client'
-import WaveSvg from "@/components/UI/WaveSvg";
 import WindowBlock from "@/components/UI/WindowBlock";
 import {BackgroundPage} from "@/app/(auth)/page.styled";
-import {useRouter, useSearchParams} from "next/navigation";
+import {useRouter} from "next/navigation";
 import SubmitButton from "@/components/UI/SubmitButton";
 import {InfoWindow, TitleNeuroexercise, VideoWrapper} from "@/app/neuroexercise/page.styled";
 import {useEffect, useState} from "react";
@@ -12,24 +11,26 @@ import {streak, streakLoaded, studyGroup} from "@/store/streakStore";
 
 export default function NeuroexercisePage() {
     const router = useRouter()
-    const searchParams = useSearchParams();
-    const timestamp = searchParams.get('timestamp');
-    const [videoUrl, setVideoUrl] = useState<string>('')
+    const [videoUrl, setVideoUrl] = useState<string>('');
     const loaded = streakLoaded();
     const streakDay = streak();
     const totalDays = studyGroup();
 
     useEffect(() => {
-        console.log()
+        const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+        const ts = params ? params.get('timestamp') : null;
+
+        if (!ts) {
+            setVideoUrl('http://127.0.0.1:8000/videos/early/1.mp4');
+            return;
+        }
+
         const fetchVideo = async () => {
-            const res = await NetworkService.calming({
-                timestamp: timestamp,
-            });
-            if(res.status === 200){
-                // setVideoUrl(`http://127.0.0.1:8000${res.data.path}`)
-                setVideoUrl(`http://127.0.0.1:8000/videos/noise.mp4`)
-            }else{
-                setVideoUrl(`http://127.0.0.1:8000/videos/early/1.mp4"`)
+            const res = await NetworkService.calming({ timestamp: ts });
+            if (res.status === 200) {
+                setVideoUrl(`http://127.0.0.1:8000${res.data.path}`);
+            } else {
+                setVideoUrl('http://127.0.0.1:8000/videos/early/1.mp4');
             }
         };
         fetchVideo();
@@ -43,7 +44,6 @@ export default function NeuroexercisePage() {
 
     return (
         <BackgroundPage>
-            <WaveSvg />
             <WindowBlock>
                 <TitleNeuroexercise>
                     <div>

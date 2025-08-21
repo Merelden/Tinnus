@@ -1,5 +1,4 @@
 'use client'
-import WaveSvg from "@/components/UI/WaveSvg";
 import WindowBlock from "@/components/UI/WindowBlock";
 import {BackgroundPage} from "@/app/(auth)/page.styled";
 import {
@@ -21,7 +20,6 @@ export default function InstructionPage() {
 
     return (
         <BackgroundPage>
-            <WaveSvg />
             <WindowBlock>
                 <WrapperInstruction>
                 <TitleInstruction>

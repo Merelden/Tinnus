@@ -4,6 +4,9 @@ import '../styles/reset.css';
 import ModalProvider from "@/providers/ModalProvider";
 import StreakInit from "@/providers/StreakInit";
 import Modal from "@/components/UI/Modal";
+import StartupLoading from "@/providers/StartupLoading";
+import StyledComponentsRegistry from "@/lib/StyledComponentsRegistry";
+import WaveSvg from "@/components/UI/WaveSvg";
 
 // Подключение шрифтов
 const MontserratFont = Montserrat({
@@ -20,6 +23,7 @@ const ManropeFont = Manrope({
 
 // Дефолтные метаданные, которые будут использоваться на всех страницах
 export const metadata: Metadata = {
+    metadataBase: new URL('https://neurotinnitus.ru'),
     title: 'Программа исследования тиннитуса',
     description:
         'Присоединяйтесь к нашему исследованию и помогите улучшить методы диагностики и лечения тиннитуса.',
@@ -62,11 +66,15 @@ export default function RootLayout({
     return (
         <html lang="ru">
         <body className={`${ManropeFont.variable} ${MontserratFont.variable}`}>
-            <ModalProvider>
-                <StreakInit />
-                {children}
-                <Modal />
-            </ModalProvider>
+            <StyledComponentsRegistry>
+                <ModalProvider>
+                    <StreakInit />
+                    <StartupLoading />
+                    <WaveSvg />
+                    {children}
+                    <Modal />
+                </ModalProvider>
+            </StyledComponentsRegistry>
         </body>
         </html>
     );
