@@ -25,9 +25,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-w$g6o1c2tn32h%r_!qyk6ig$o2-3cweevm-+pc3khd=gx!#q_2'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['neurotinnitus.ru', 'www.neurotinnitus.ru', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -67,8 +67,6 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
-
-# Список доступных адресов для сервера
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
@@ -76,9 +74,9 @@ CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:5173',
     'http://localhost:8000',
     'http://127.0.0.1:8000',
+    'https://neurotinnitus.ru',
 ]
 
-# Для кросс-доменных POST/PUT/PATCH запросов с сессиями нужно доверять фронтенд-источникам
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
@@ -86,6 +84,7 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:5173',
     'http://localhost:8000',
     'http://127.0.0.1:8000',
+    'https://neurotinnitus.ru',
 ]
 
 
@@ -157,7 +156,10 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+MEDIA_URL = '/media/'
+STATIC_ROOT = "/var/www/Tinnus/hearing_project/staticfiles"
+MEDIA_ROOT = "/var/www/Tinnus/hearing-backend/videos"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -171,7 +173,8 @@ REST_FRAMEWORK = {
     ),
 }
 
-SETTINGS_COOKIE_HTTPONLY = False
+
+SECURE_SSL_REDIRECT = True
 CSRF_COOKIE_HTTPONLY = False
 SESSION_COOKIE_HTTPONLY = True
 # Telegram Login Widget
