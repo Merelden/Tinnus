@@ -1,6 +1,19 @@
 import styled from 'styled-components'
 import {blackColor, GrayColor, lightGrayColor, primaryColor, textColor, whiteColor} from "@/styles/colors";
 
+export const WrapperWindowVide = styled.div`
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    @media (max-width: 750px) {
+        .submit-btn{
+            font-size: 18px;
+            width: 240px;
+        }
+    }
+`
+
 export const TitleInstruction = styled.div`
     display: flex;
     justify-content: center;
@@ -11,6 +24,28 @@ export const TitleInstruction = styled.div`
         width: 920px;
         margin-bottom: 32px;
     }
+    @media (max-width: 1000px) {
+        p{
+            width: 100%;
+            font-size: 16px;
+        }
+    }
+    @media (max-width: 600px) {
+        h2{
+           text-wrap: auto;
+        }
+        p{
+            font-size: 14px;
+        }
+    }
+    @media (max-width: 400px) {
+        h2{
+            font-size: 18px;
+        }
+        p{
+            font-size: 10px;
+        }
+    }
 `
 export const VideoWrapper = styled.div`
     width: 940px;
@@ -19,6 +54,19 @@ export const VideoWrapper = styled.div`
     overflow: hidden;
     video{
         width: 100%;
+    }
+    @media (max-width: 1000px) {
+        width: 100%;
+        height: 450px;
+    }
+    @media (max-width: 800px) {
+        height: 380px;
+    }
+    @media (max-width: 600px) {
+        height: 240px;
+    }
+    @media (max-width: 400px) {
+        height: 180px;
     }
 `
 export const VideoError = styled.div`
@@ -38,6 +86,13 @@ export const VideoControls = styled.div`
     gap: 10px;
     margin-top: 16px;
     width: 100%;
+    @media (max-width: 550px) {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+    @media (max-width: 450px) {
+        flex-wrap: wrap;
+    }
 `
 export const VideoButton = styled.button<{$primary?: boolean}>`
     background-color: ${({$primary}) => $primary ? primaryColor : lightGrayColor};
@@ -48,6 +103,20 @@ export const VideoButton = styled.button<{$primary?: boolean}>`
     border-radius: 8px;
     font-family: var(--font-manrope), serif;
     font-weight: 500;
+    @media (max-width: 750px) {
+        font-size: 18px;
+        height: 40px;
+        min-width: ${({$primary}) => $primary ? '80px' : '64px'};
+    }
+    @media (max-width: 600px) {
+        font-size: 16px;
+        height: 36px;
+        min-width: ${({$primary}) => $primary ? '70px' : '54px'};
+    }
+    @media (max-width: 550px) {
+        flex: 0 0 auto;
+        order: 2;
+    }
 `
 export const VideoRange = styled.input`
     border-radius: 8px;
@@ -139,6 +208,14 @@ export const VideoRange = styled.input`
     &:disabled::-moz-range-thumb {
         cursor: not-allowed;
     }
+    @media (max-width: 600px) {
+        height: 6px;
+    }
+    @media (max-width: 550px) {
+        flex: 1 1 100%;
+        order: 5;
+        margin: 10px 0;
+    }
 `
 
 export const VideTime = styled.p`
@@ -146,4 +223,15 @@ export const VideTime = styled.p`
     color: ${textColor};
     font-family: var(--font-manrope), serif;
     font-weight: 700;
+    @media (max-width: 750px) {
+        font-size: 16px !important;
+    }
+    @media (max-width: 600px) {
+        display: none;
+    }
+    @media (max-width: 550px) {
+        display: block;
+        order: 2;
+        flex: 1 1 auto;
+    }
 `

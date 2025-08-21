@@ -9,7 +9,7 @@ import {
     VideoControls, VideoError,
     VideoRange,
     VideoWrapper,
-    VideTime
+    VideTime, WrapperWindowVide
 } from "@/app/video/page.styled";
 import SubmitButton from "@/components/UI/SubmitButton";
 import {useEffect, useRef, useState} from "react";
@@ -165,6 +165,7 @@ export default function VideoPage() {
         <BackgroundPage>
             <WaveSvg />
             <WindowBlock>
+                <WrapperWindowVide>
                 <TitleInstruction>
                     <h2>Теперь прослушайте аудиофайл</h2>
                     <p>Как только вы услышите шум, похожий на ваш, нажмите кнопку «Я услышал свой шум», чтобы продолжить. Это поможет нам точно зафиксировать ваш симптом и направить вас к нужному нейроупражнению.</p>
@@ -232,6 +233,7 @@ export default function VideoPage() {
                     onClick={handleNext}
                     hidden={isPlaying || !(currentTime>0)}
                 />
+                </WrapperWindowVide>
             </WindowBlock>
         </BackgroundPage>
     );

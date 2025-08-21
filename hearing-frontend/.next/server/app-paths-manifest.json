@@ -1,0 +1,10 @@
+{
+  "/(auth)/login/page": "app/(auth)/login/page.js",
+  "/(auth)/register/page": "app/(auth)/register/page.js",
+  "/instruction/page": "app/instruction/page.js",
+  "/neuroexercise/page": "app/neuroexercise/page.js",
+  "/page": "app/page.js",
+  "/start/page": "app/start/page.js",
+  "/tests/page": "app/tests/page.js",
+  "/video/page": "app/video/page.js"
+}

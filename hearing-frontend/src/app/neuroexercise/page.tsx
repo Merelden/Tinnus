@@ -26,7 +26,8 @@ export default function NeuroexercisePage() {
                 timestamp: timestamp,
             });
             if(res.status === 200){
-                setVideoUrl(`http://127.0.0.1:8000${res.data.path}`)
+                // setVideoUrl(`http://127.0.0.1:8000${res.data.path}`)
+                setVideoUrl(`http://127.0.0.1:8000/videos/noise.mp4`)
             }else{
                 setVideoUrl(`http://127.0.0.1:8000/videos/early/1.mp4"`)
             }

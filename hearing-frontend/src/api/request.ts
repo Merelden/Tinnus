@@ -100,6 +100,13 @@ export class NetworkService {
             return error.response;
         }
     }
+    static async feedback(data: object): Promise<AxiosResponse> {
+        try {
+            return await axiosInstance.post('/feedback/submit/', data);
+        } catch (error: any) {
+            return error.response;
+        }
+    }
  
     // Тесты
     static async questions(): Promise<AxiosResponse> {

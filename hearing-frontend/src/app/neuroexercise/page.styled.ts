@@ -24,6 +24,31 @@ export const TitleNeuroexercise = styled.div`
         margin-top: 20px;
         margin-bottom: 0;
     }
+    @media (max-width: 1150px) {
+        gap: 24px;
+        p{
+            width: 100%;
+        }
+        button{
+            width: 450px;
+            font-size: 20px;
+        }
+    }
+    @media (max-width: 700px) {
+        flex-direction: column;
+        gap: 8px;
+        div{
+            justify-content: center;
+            align-items: center;
+        }
+        div:nth-last-child(1){
+            flex-direction: row;
+            gap: 16px;
+        }
+        p{
+            text-align: center !important;
+        }
+    }
 `
 export const InfoWindow = styled.p<{$primary?: boolean}>`
     width: 160px !important;
@@ -45,4 +70,14 @@ export const VideoWrapper = styled.div`
     height: 490px;
     border-radius: 24px;
     overflow: hidden;
+    @media (max-width: 1000px) {
+        width: 100%;
+        height: 420px;
+    }
+    @media (max-width: 800px) {
+        height: 340px;
+    }
+    @media (max-width: 600px) {
+        height: 260px;
+    }
 `

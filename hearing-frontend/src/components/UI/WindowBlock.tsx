@@ -56,7 +56,7 @@ const Wrapper = styled.div`
             }
         }
     }
-    @media (max-width: 500px) {
+    @media (max-width: 550px) {
         width: 100vw;
         padding: 32px 16px;
         h2{
@@ -65,7 +65,7 @@ const Wrapper = styled.div`
         p{
             &.description-mini{
                 font-size: 14px;
-                width: 120%;
+                width: 110%;
                 margin-top: 14px;
             }
             &.description-start{

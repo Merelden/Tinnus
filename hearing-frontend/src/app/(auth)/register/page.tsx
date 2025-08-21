@@ -63,7 +63,13 @@ export default function RegisterPage() {
                 console.log(parsedErrors);
             }
             if (res.status === 201) {
-                router.push("/start");
+                const res = await NetworkService.login({
+                    email: email,
+                    password: password
+                });
+                if(res.status === 200){
+                    window.location.href = "/start";
+                }
             }
         } catch (err) {
             console.error(err);

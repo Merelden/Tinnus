@@ -14,4 +14,9 @@ export const TextareaComplete = styled.textarea`
     font-size: 18px;
     font-family: var(--font-manrope), serif;
     color: ${blackColor};
+    @media (max-width: 700px) {
+        width: 90%;
+        font-size: 16px;
+        padding: 10px 8px;
+    }
 `
