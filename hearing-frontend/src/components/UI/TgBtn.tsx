@@ -63,11 +63,13 @@ export const TelegramLoginButton = (props: Props) => {
       }
     };
 
+    const loginName = (botName || '').replace(/^@/, '');
+
     const script = document.createElement('script');
     script.src = 'https://telegram.org/js/telegram-widget.js?22';
     script.async = true;
 
-    script.setAttribute('data-telegram-login', botName);
+    script.setAttribute('data-telegram-login', loginName);
     script.setAttribute('data-request-access', 'write');
     script.setAttribute('data-onauth', 'TelegramOnAuthCb(user)');
     script.setAttribute('data-lang', 'ru');
@@ -82,21 +84,8 @@ export const TelegramLoginButton = (props: Props) => {
   }, [botName, onAuthCallback]);
 
   return (
-    <div className="relative w-[300px]">
-      <div className="absolute top-0.5 left-8 opacity-0" ref={_containerRef} />
-      <Button
-        style={{
-          pointerEvents: 'none',
-          background: 'var(--background-gradient-telegram-button)',
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '8px',
-        }}
-      >
-        <TelegramIcon />
-        <span>Войти с Telegram</span>
-      </Button>
+    <div style={{ display: 'flex', justifyContent: 'center' }}>
+      <div ref={_containerRef} />
     </div>
   );
 };
