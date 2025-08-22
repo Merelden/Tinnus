@@ -76,11 +76,12 @@ const OAuthBtns = () => {
         // Проверка, что SDK загружен и готов
         if (isSdkLoaded && (window as any).VKIDSDK) {
             const VKID: any = (window as any).VKIDSDK;
+            const REDIRECT_URL = 'https://neurotinnitus.ru';
 
             // Инициализация SDK
             VKID.Config.init({
                 app: 54067159,
-                redirectUrl: 'https://neurotinnitus.ru',
+                redirectUrl: REDIRECT_URL,
                 responseMode: VKID.ConfigResponseMode.Callback,
                 source: VKID.ConfigSource.LOWCODE,
                 scope: 'email, vkid.personal_info'// Заполните нужными доступами по необходимости
@@ -105,7 +106,7 @@ const OAuthBtns = () => {
                 const codeVerifier = payload.code_verifier || payload.codeVerifier;
 
                 // Отправляем code на бэкенд
-                authWithServer(code, deviceId, codeVerifier);
+                authWithServer(code, deviceId, codeVerifier, REDIRECT_URL);
             });
 
 
@@ -114,11 +115,12 @@ const OAuthBtns = () => {
                 // Обработка ошибки
                 console.error('Ошибка входа', error);
             }
-            const authWithServer = async(code, deviceId, codeVerifier)=>{
+            const authWithServer = async(code, deviceId, codeVerifier, redirectUri)=>{
                 const res = await NetworkService.authVk({
                     code: code,
                     device_id: deviceId,
-                    code_verifier: codeVerifier
+                    code_verifier: codeVerifier,
+                    redirect_uri: redirectUri
                 })
                 console.log(res);
             }
