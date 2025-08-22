@@ -602,15 +602,18 @@ class VKIDAuthView(APIView):
             token_data = None
             last_error = None
             try:
+                payload = {
+                    'grant_type': 'authorization_code',
+                    'client_id': client_id,
+                    'client_secret': client_secret,
+                    'redirect_uri': redirect_uri,
+                    'code': code,
+                }
+                if device_id:
+                    payload['device_id'] = device_id
                 r = requests.post(
                     'https://id.vk.com/oauth2/token',
-                    data={
-                        'grant_type': 'authorization_code',
-                        'client_id': client_id,
-                        'client_secret': client_secret,
-                        'redirect_uri': redirect_uri,
-                        'code': code,
-                    },
+                    data=payload,
                     timeout=10
                 )
                 token_data = r.json()

@@ -183,8 +183,12 @@ TELEGRAM_BOT_TOKEN = '7993827778:AAFb8m1ZBnLlu-Kn3LqraQSQFNO-RmA7qfs'
 TELEGRAM_LOGIN_MAX_AGE = 86400
 
 # VK ID OAuth settings (fill with real values)
+#VK_APP_ID = 54067159
 VK_APP_ID = 54067159
 # Берём секрет из переменной окружения (обязательно задайте VK_APP_SECRET на сервере)
 VK_APP_SECRET = os.getenv('VK_APP_SECRET', '')
 # redirect_uri должен совпадать с тем, что настроено в VK и что указывает виджет
 VK_REDIRECT_URI = 'https://neurotinnitus.ru'
+
+# redirect_uri должен совпадать с тем, что настроено в VK и что указывает виджет
+#VK_REDIRECT_URI = 'https://neurotinnitus.ru'
