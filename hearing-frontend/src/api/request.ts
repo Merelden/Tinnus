@@ -7,8 +7,8 @@
 function getApiBaseUrl(): string {
     const explicit = typeof window !== 'undefined' ? (window as any).NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL : process.env.NEXT_PUBLIC_API_BASE_URL;
     if (explicit) return explicit as string;
-    const host = typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1';
-    return `http://${host}:8000/api`;
+    const host = typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1:8000';
+    return `https://${host}/api`;
 }
 
 const axiosInstance = axios.create({
@@ -88,6 +88,13 @@ export class NetworkService {
     static async isAuth(): Promise<AxiosResponse> {
         try {
             return await axiosInstance.get('/auth/status/');
+        } catch (error: any) {
+            return error.response;
+        }
+    }
+    static async authVk(data: Object): Promise<AxiosResponse> {
+        try {
+            return await axiosInstance.get('/auth/vk/', data);
         } catch (error: any) {
             return error.response;
         }

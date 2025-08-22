@@ -1,0 +1,12 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/neuroexercise/page": "/neuroexercise",
+  "/(auth)/login/page": "/login",
+  "/(auth)/register/page": "/register",
+  "/complete/page": "/complete",
+  "/instruction/page": "/instruction",
+  "/page": "/",
+  "/start/page": "/start",
+  "/video/page": "/video",
+  "/tests/page": "/tests"
+}

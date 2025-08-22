@@ -3,6 +3,7 @@
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import styled from 'styled-components';
+import path from 'path';
 
 const TRANSITION_MS = 700;
 const SESSION_STORAGE_KEY = 'prev-path';
@@ -115,6 +116,8 @@ const WaveSvg: React.FC = () => {
         setVars(poseFromPath(pathname));
         window.sessionStorage.setItem(SESSION_STORAGE_KEY, pathname);
     }, [pathname]);
+    
+    if(pathname === '/') return null;
 
     return (
         <WrapperWave style={vars as React.CSSProperties}>

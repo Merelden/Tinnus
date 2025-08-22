@@ -9,7 +9,6 @@ export const BackgroundPage = styled.section`
     position: relative;
     padding: 24px;
     z-index: 10;
-
     .content {
         animation: fadeInUp 400ms ease-out both;
     }

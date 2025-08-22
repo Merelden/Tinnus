@@ -32,7 +32,7 @@ export const TitleInstruction = styled.div`
     }
     @media (max-width: 600px) {
         h2{
-           text-wrap: auto;
+           text-wrap: wrap;
         }
         p{
             font-size: 14px;

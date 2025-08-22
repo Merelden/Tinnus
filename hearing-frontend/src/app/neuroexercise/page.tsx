@@ -21,16 +21,16 @@ export default function NeuroexercisePage() {
         const ts = params ? params.get('timestamp') : null;
 
         if (!ts) {
-            setVideoUrl('http://127.0.0.1:8000/videos/early/1.mp4');
+            setVideoUrl('https://neurotinnitus.ru/media/early/1.mp4');
             return;
         }
 
         const fetchVideo = async () => {
             const res = await NetworkService.calming({ timestamp: ts });
             if (res.status === 200) {
-                setVideoUrl(`http://127.0.0.1:8000${res.data.path}`);
+                setVideoUrl(`https://neurotinnitus.ru/media/${res.data.path}`);
             } else {
-                setVideoUrl('http://127.0.0.1:8000/videos/early/1.mp4');
+                setVideoUrl('https://neurotinnitus.ru/media/early/1.mp4');
             }
         };
         fetchVideo();

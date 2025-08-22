@@ -36,7 +36,7 @@ export const TitleTest = styled.div`
     width: 100%;
     h2{
         text-align: start;
-        text-wrap: auto;
+        text-wrap: wrap;
     }
 `
 export const FormTest = styled.form`

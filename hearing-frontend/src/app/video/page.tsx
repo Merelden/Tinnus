@@ -23,7 +23,7 @@ export default function VideoPage() {
     const [isPlaying, setIsPlaying] = useState(false);
     const [videoError, setVideoError] = useState(false);
     const [isVideoReady, setIsVideoReady] = useState(false);
-    const videoUrl = 'http://127.0.0.1:8000/videos/noise.mp4';
+    const videoUrl = 'https://neurotinnitus.ru/media/noise.mp4';
 
     const handleNext = () =>{
         const step = 125 / 12;

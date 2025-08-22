@@ -128,6 +128,7 @@ export default function RegisterPage() {
                     />
                     <button type={"submit"}>Зарегистрироваться</button>
                 </AuthForm>
+                
 
                 <OAuthBtns />
 

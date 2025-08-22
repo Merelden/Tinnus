@@ -22,7 +22,7 @@ export const TitleInstruction = styled.div`
     flex-direction: column;
     gap: 16px;
     h2{
-        text-wrap: auto;
+        text-wrap: wrap;
     }
     p{
         width: 800px;
