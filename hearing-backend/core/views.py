@@ -584,6 +584,7 @@ class VKIDAuthView(APIView):
         access_token_in = request.data.get('access_token')
         device_id = request.data.get('device_id')  # используется при обмене кода (OneTap)
         code_verifier = request.data.get('code_verifier') or request.data.get('codeVerifier')
+        redirect_uri_override = (request.data.get('redirect_uri') or '').strip()
 
         access_token = None
         vk_user_id = None
@@ -596,6 +597,10 @@ class VKIDAuthView(APIView):
             client_id = getattr(settings, 'VK_APP_ID', None)
             client_secret = getattr(settings, 'VK_APP_SECRET', '')
             redirect_uri = getattr(settings, 'VK_REDIRECT_URI', None)
+            # Разрешаем переопределить redirect_uri, если пришёл допустимый вариант (например, www-домен)
+            allowed_redirects = {str(getattr(settings, 'VK_REDIRECT_URI', '')).strip(), 'https://www.neurotinnitus.ru'}
+            if redirect_uri_override and redirect_uri_override in allowed_redirects:
+                redirect_uri = redirect_uri_override
             if not client_id or not client_secret or not redirect_uri:
                 return Response({'detail': 'VK ID не настроен на сервере (проверьте VK_APP_ID, VK_APP_SECRET, VK_REDIRECT_URI).'},
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
