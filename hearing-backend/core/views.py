@@ -19,6 +19,10 @@ import base64
 from collections import defaultdict
 import requests
 from django.db.models import Q
+import logging
+
+vk_logger = logging.getLogger('vk')
+server_logger = logging.getLogger(__name__)
 
 
 class RegisterView(generics.CreateAPIView):
@@ -602,6 +606,7 @@ class VKIDAuthView(APIView):
             if redirect_uri_override and redirect_uri_override in allowed_redirects:
                 redirect_uri = redirect_uri_override
             if not client_id or not client_secret or not redirect_uri:
+                vk_logger.error(f"VK config missing: client_id={client_id}, has_secret={bool(client_secret)}, redirect_uri={redirect_uri}")
                 return Response({'detail': 'VK ID не настроен на сервере (проверьте VK_APP_ID, VK_APP_SECRET, VK_REDIRECT_URI).'},
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             # Обмен кода на токены через VK ID (OAuth2)
@@ -619,14 +624,17 @@ class VKIDAuthView(APIView):
                     payload['device_id'] = device_id
                 if code_verifier:
                     payload['code_verifier'] = code_verifier
+                vk_logger.info(f"VK token request payload: keys={list(payload.keys())}, redirect_uri={redirect_uri}")
                 r = requests.post(
                     'https://id.vk.com/oauth2/token',
                     data=payload,
                     timeout=10
                 )
+                vk_logger.info(f"VK token response status={r.status_code}, body={r.text[:500]}")
                 token_data = r.json()
             except Exception as e:
                 last_error = e
+                vk_logger.exception(f"VK token exchange exception: {e}")
 
             # Fallback на старый endpoint, если не удалось соединиться с id.vk.com
             if token_data is None:
@@ -641,14 +649,18 @@ class VKIDAuthView(APIView):
                         },
                         timeout=10
                     )
+                    vk_logger.info(f"VK legacy token response status={r.status_code}, body={r.text[:500]}")
                     token_data = r.json()
                 except Exception as e2:
                     err_msg = f"Ошибка соединения с VK OAuth: {str(last_error or e2)}"
+                    vk_logger.exception(err_msg)
                     return Response({'detail': err_msg}, status=status.HTTP_502_BAD_GATEWAY)
 
             if not isinstance(token_data, dict):
+                vk_logger.error(f"VK token response is not JSON dict: {token_data}")
                 return Response({'detail': 'Некорректный ответ VK OAuth.'}, status=status.HTTP_502_BAD_GATEWAY)
             if 'error' in token_data:
+                vk_logger.warning(f"VK OAuth error: {token_data}")
                 return Response({'detail': f"VK OAuth error: {token_data.get('error_description') or token_data.get('error')}"},
                                 status=status.HTTP_400_BAD_REQUEST)
 
@@ -669,8 +681,9 @@ class VKIDAuthView(APIView):
                         last_name = payload.get('family_name') or payload.get('last_name') or last_name
                         photo_url = payload.get('picture') or photo_url
                         email = payload.get('email') or email
-            except Exception:
-                pass
+                        vk_logger.info(f"VK id_token parsed: has_sub={bool(vk_user_id)}, has_name={bool(first_name or last_name)}, has_email={bool(email)}")
+            except Exception as e:
+                vk_logger.exception(f"Failed to parse id_token: {e}")
 
             # Фолбэк: users.get, если id или ФИО не удалось получить
             if access_token and (not vk_user_id or not first_name or not last_name):
@@ -680,6 +693,7 @@ class VKIDAuthView(APIView):
                         params={'access_token': access_token, 'v': '5.131', 'fields': 'photo_100'},
                         timeout=10
                     )
+                    vk_logger.info(f"VK users.get status={r2.status_code}, body={r2.text[:500]}")
                     j2 = r2.json()
                     if isinstance(j2, dict) and isinstance(j2.get('response'), list) and j2['response']:
                         u = j2['response'][0]
@@ -687,10 +701,11 @@ class VKIDAuthView(APIView):
                         first_name = u.get('first_name') or first_name
                         last_name = u.get('last_name') or last_name
                         photo_url = u.get('photo_100') or photo_url
-                except Exception:
-                    pass
+                except Exception as e:
+                    vk_logger.exception(f"users.get exception: {e}")
 
             if not vk_user_id:
+                vk_logger.error("No vk_user_id after token/id_token/users.get")
                 return Response({'detail': 'VK не вернул user_id.'}, status=status.HTTP_400_BAD_REQUEST)
 
         elif access_token_in:

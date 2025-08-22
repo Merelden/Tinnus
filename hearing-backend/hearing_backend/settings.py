@@ -14,6 +14,8 @@ from pathlib import Path
 import os
 
 from django.conf.global_settings import CSRF_COOKIE_HTTPONLY, SESSION_COOKIE_HTTPONLY
+import logging
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -192,3 +194,48 @@ VK_REDIRECT_URI = 'https://neurotinnitus.ru'
 
 # redirect_uri должен совпадать с тем, что настроено в VK и что указывает виджет
 #VK_REDIRECT_URI = 'https://neurotinnitus.ru'
+
+# Logging configuration: separate files for VK and general server logs
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(asctime)s [%(levelname)s] %(name)s %(message)s'
+        },
+    },
+    'handlers': {
+        'vk_file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': str(BASE_DIR / 'vk.log'),
+            'maxBytes': 1024 * 1024 * 5,  # 5 MB
+            'backupCount': 3,
+            'formatter': 'verbose',
+        },
+        'server_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': str(BASE_DIR / 'server.log'),
+            'maxBytes': 1024 * 1024 * 10,  # 10 MB
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'vk': {
+            'handlers': ['vk_file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['server_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+    },
+    'root': {
+        'handlers': ['server_file'],
+        'level': 'INFO',
+    }
+}
