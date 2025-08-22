@@ -158,7 +158,7 @@ class NetworkService {
     }
     static async authVk(data) {
         try {
-            return await axiosInstance.get('/auth/vk/', data);
+            return await axiosInstance.post('/auth/vk/', data);
         } catch (error) {
             return error.response;
         }

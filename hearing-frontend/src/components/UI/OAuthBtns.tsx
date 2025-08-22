@@ -103,10 +103,24 @@ const OAuthBtns = () => {
                 const code = payload.code;
                 const deviceId = payload.device_id;
 
-                // Обмен кода на токен
-                VKID.Auth.exchangeCode(code, deviceId)
-                    .then(vkidOnSuccess)
-                    .catch(vkidOnError);
+                // Отправляем code на бэкенд
+                authWithServer(code, deviceId)
+                fetch("/api/auth/vk", {
+                    method: "POST",
+                    headers: {
+                    "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ code, device_id: deviceId }),
+                    credentials: "include", // чтобы сохранить сессию/куки
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                    console.log("Ответ бэкенда:", data);
+                    // тут можно сохранить participant или state юзера
+                    })
+                    .catch(err => {
+                    console.error("Ошибка авторизации VK:", err);
+                    });
             });
 
             function vkidOnSuccess(data) {
@@ -132,9 +146,10 @@ const OAuthBtns = () => {
                 // Обработка ошибки
                 console.error('Ошибка входа', error);
             }
-            const authWithServer = async(accessToken: string)=>{
+            const authWithServer = async(code, deviceId)=>{
                 const res = await NetworkService.authVk({
-                    access_token: accessToken
+                    code: code,
+                    device_id: deviceId
                 })
                 console.log(res);
             }

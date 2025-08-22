@@ -94,7 +94,7 @@ export class NetworkService {
     }
     static async authVk(data: Object): Promise<AxiosResponse> {
         try {
-            return await axiosInstance.get('/auth/vk/', data);
+            return await axiosInstance.post('/auth/vk/', data);
         } catch (error: any) {
             return error.response;
         }
