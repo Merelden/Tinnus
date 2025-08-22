@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import styled from "styled-components";
 import Image from "next/image";
 import { lightGrayColor, textColor } from "@/styles/colors";
-import Head from 'next/head';
+
 import { NetworkService } from '@/api/request';
 
 const Wrapper = styled.div`
@@ -74,8 +74,8 @@ const OAuthBtns = () => {
 
     useEffect(() => {
         // Проверка, что SDK загружен и готов
-        if (isSdkLoaded && 'VKIDSDK' in window) {
-            const VKID = window.VKIDSDK;
+        if (isSdkLoaded && (window as any).VKIDSDK) {
+            const VKID: any = (window as any).VKIDSDK;
 
             // Инициализация SDK
             VKID.Config.init({
@@ -99,48 +99,15 @@ const OAuthBtns = () => {
                 }
             })
             .on(VKID.WidgetEvents.ERROR, vkidOnError)
-            .on(VKID.OneTapInternalEvents.LOGIN_SUCCESS, function (payload) {
+            .on(VKID.OneTapInternalEvents.LOGIN_SUCCESS, function (payload: any) {
                 const code = payload.code;
                 const deviceId = payload.device_id;
 
                 // Отправляем code на бэкенд
-                authWithServer(code, deviceId)
-                fetch("/api/auth/vk", {
-                    method: "POST",
-                    headers: {
-                    "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ code, device_id: deviceId }),
-                    credentials: "include", // чтобы сохранить сессию/куки
-                })
-                    .then(res => res.json())
-                    .then(data => {
-                    console.log("Ответ бэкенда:", data);
-                    // тут можно сохранить participant или state юзера
-                    })
-                    .catch(err => {
-                    console.error("Ошибка авторизации VK:", err);
-                    });
+                authWithServer(code, deviceId);
             });
 
-            function vkidOnSuccess(data) {
-                console.log("Результат обмена кода:", data);
 
-                const idToken = data.id_token;
-                const accessToken = data.access_token;
-                console.log(accessToken)
-
-                if (idToken) {
-                    VKID.Auth.publicInfo(idToken)
-                    .then(userInfo => {
-                        authWithServer(accessToken)
-                        console.log("Информация о пользователе:", userInfo);
-                    })
-                    .catch(err => {
-                        console.error("Ошибка получения publicInfo:", err);
-                    });
-                }
-            }
 
             function vkidOnError(error) {
                 // Обработка ошибки
@@ -158,12 +125,10 @@ const OAuthBtns = () => {
 
     return (
         <Wrapper>
-            <Head>
-                <script src="https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js"></script>
-            </Head>
+
             <WrapperOr>
                 <hr />
-                <p>илfи</p>
+                <p>или</p>
                 <hr />
             </WrapperOr>
             <WrapperButtons>

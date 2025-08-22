@@ -599,6 +599,8 @@ class VKIDAuthView(APIView):
                 return Response({'detail': 'VK ID не настроен на сервере (проверьте VK_APP_ID, VK_APP_SECRET, VK_REDIRECT_URI).'},
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             # Обмен кода на токены через VK ID (OAuth2)
+            token_data = None
+            last_error = None
             try:
                 r = requests.post(
                     'https://id.vk.com/oauth2/token',
@@ -612,8 +614,26 @@ class VKIDAuthView(APIView):
                     timeout=10
                 )
                 token_data = r.json()
-            except Exception:
-                return Response({'detail': 'Ошибка соединения с VK OAuth.'}, status=status.HTTP_502_BAD_GATEWAY)
+            except Exception as e:
+                last_error = e
+
+            # Fallback на старый endpoint, если не удалось соединиться с id.vk.com
+            if token_data is None:
+                try:
+                    r = requests.get(
+                        'https://oauth.vk.com/access_token',
+                        params={
+                            'client_id': client_id,
+                            'client_secret': client_secret,
+                            'redirect_uri': redirect_uri,
+                            'code': code,
+                        },
+                        timeout=10
+                    )
+                    token_data = r.json()
+                except Exception as e2:
+                    err_msg = f"Ошибка соединения с VK OAuth: {str(last_error or e2)}"
+                    return Response({'detail': err_msg}, status=status.HTTP_502_BAD_GATEWAY)
 
             if not isinstance(token_data, dict):
                 return Response({'detail': 'Некорректный ответ VK OAuth.'}, status=status.HTTP_502_BAD_GATEWAY)
