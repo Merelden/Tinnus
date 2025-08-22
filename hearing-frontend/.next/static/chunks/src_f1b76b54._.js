@@ -301,7 +301,6 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$styled$2d$components$2f$dist$2f$styled$2d$components$2e$browser$2e$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/styled-components/dist/styled-components.browser.esm.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$image$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/image.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$styles$2f$colors$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/styles/colors.ts [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$client$2f$components$2f$noop$2d$head$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/client/components/noop-head.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$api$2f$request$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/api/request.ts [app-client] (ecmascript)");
 ;
 function _templateObject() {
@@ -336,7 +335,7 @@ function _templateObject2() {
 function _templateObject3() {
     const data = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_tagged_template_literal$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"])([
         "\n    width: 160px;\n    height: 44px;\n    border-radius: 6px;\n    background-color: ",
-        ";\n    \n    img {\n        user-drag: none;\n        -webkit-user-drag: none;\n    }\n"
+        ";\n    \n    img {\n        user-drag: none;\n        -webkit-user-drag: none;с≠\n    }\n"
     ]);
     _templateObject3 = function() {
         return data;
@@ -345,7 +344,6 @@ function _templateObject3() {
 }
 ;
 var _s = __turbopack_context__.k.signature();
-;
 ;
 ;
 ;
@@ -397,7 +395,7 @@ const OAuthBtns = ()=>{
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "OAuthBtns.useEffect": ()=>{
             // Проверка, что SDK загружен и готов
-            if (isSdkLoaded && 'VKIDSDK' in window) {
+            if (isSdkLoaded && window.VKIDSDK) {
                 const VKID = window.VKIDSDK;
                 // Инициализация SDK
                 VKID.Config.init({
@@ -421,59 +419,21 @@ const OAuthBtns = ()=>{
                     "OAuthBtns.useEffect": function(payload) {
                         const code = payload.code;
                         const deviceId = payload.device_id;
+                        const codeVerifier = payload.code_verifier || payload.codeVerifier;
                         // Отправляем code на бэкенд
-                        authWithServer(code, deviceId);
-                        fetch("/api/auth/vk", {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json"
-                            },
-                            body: JSON.stringify({
-                                code,
-                                device_id: deviceId
-                            }),
-                            credentials: "include"
-                        }).then({
-                            "OAuthBtns.useEffect": (res)=>res.json()
-                        }["OAuthBtns.useEffect"]).then({
-                            "OAuthBtns.useEffect": (data)=>{
-                                console.log("Ответ бэкенда:", data);
-                            // тут можно сохранить participant или state юзера
-                            }
-                        }["OAuthBtns.useEffect"]).catch({
-                            "OAuthBtns.useEffect": (err)=>{
-                                console.error("Ошибка авторизации VK:", err);
-                            }
-                        }["OAuthBtns.useEffect"]);
+                        authWithServer(code, deviceId, codeVerifier);
                     }
                 }["OAuthBtns.useEffect"]);
-                function vkidOnSuccess(data) {
-                    console.log("Результат обмена кода:", data);
-                    const idToken = data.id_token;
-                    const accessToken = data.access_token;
-                    console.log(accessToken);
-                    if (idToken) {
-                        VKID.Auth.publicInfo(idToken).then({
-                            "OAuthBtns.useEffect.vkidOnSuccess": (userInfo)=>{
-                                authWithServer(accessToken);
-                                console.log("Информация о пользователе:", userInfo);
-                            }
-                        }["OAuthBtns.useEffect.vkidOnSuccess"]).catch({
-                            "OAuthBtns.useEffect.vkidOnSuccess": (err)=>{
-                                console.error("Ошибка получения publicInfo:", err);
-                            }
-                        }["OAuthBtns.useEffect.vkidOnSuccess"]);
-                    }
-                }
                 function vkidOnError(error) {
                     // Обработка ошибки
                     console.error('Ошибка входа', error);
                 }
                 const authWithServer = {
-                    "OAuthBtns.useEffect.authWithServer": async (code, deviceId)=>{
+                    "OAuthBtns.useEffect.authWithServer": async (code, deviceId, codeVerifier)=>{
                         const res = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$api$2f$request$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["NetworkService"].authVk({
                             code: code,
-                            device_id: deviceId
+                            device_id: deviceId,
+                            code_verifier: codeVerifier
                         });
                         console.log(res);
                     }
@@ -485,42 +445,29 @@ const OAuthBtns = ()=>{
     ]);
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(Wrapper, {
         children: [
-            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$client$2f$components$2f$noop$2d$head$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
-                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("script", {
-                    src: "https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js"
-                }, void 0, false, {
-                    fileName: "[project]/src/components/UI/OAuthBtns.tsx",
-                    lineNumber: 162,
-                    columnNumber: 17
-                }, ("TURBOPACK compile-time value", void 0))
-            }, void 0, false, {
-                fileName: "[project]/src/components/UI/OAuthBtns.tsx",
-                lineNumber: 161,
-                columnNumber: 13
-            }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(WrapperOr, {
                 children: [
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("hr", {}, void 0, false, {
                         fileName: "[project]/src/components/UI/OAuthBtns.tsx",
-                        lineNumber: 165,
+                        lineNumber: 132,
                         columnNumber: 17
                     }, ("TURBOPACK compile-time value", void 0)),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                        children: "илfи"
+                        children: "или"
                     }, void 0, false, {
                         fileName: "[project]/src/components/UI/OAuthBtns.tsx",
-                        lineNumber: 166,
+                        lineNumber: 133,
                         columnNumber: 17
                     }, ("TURBOPACK compile-time value", void 0)),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("hr", {}, void 0, false, {
                         fileName: "[project]/src/components/UI/OAuthBtns.tsx",
-                        lineNumber: 167,
+                        lineNumber: 134,
                         columnNumber: 17
                     }, ("TURBOPACK compile-time value", void 0))
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/UI/OAuthBtns.tsx",
-                lineNumber: 164,
+                lineNumber: 131,
                 columnNumber: 13
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(WrapperButtons, {
@@ -530,7 +477,7 @@ const OAuthBtns = ()=>{
                         className: "btnAuth"
                     }, void 0, false, {
                         fileName: "[project]/src/components/UI/OAuthBtns.tsx",
-                        lineNumber: 170,
+                        lineNumber: 137,
                         columnNumber: 21
                     }, ("TURBOPACK compile-time value", void 0)),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(Button, {
@@ -541,24 +488,24 @@ const OAuthBtns = ()=>{
                             alt: 'Телеграм'
                         }, void 0, false, {
                             fileName: "[project]/src/components/UI/OAuthBtns.tsx",
-                            lineNumber: 172,
+                            lineNumber: 139,
                             columnNumber: 21
                         }, ("TURBOPACK compile-time value", void 0))
                     }, void 0, false, {
                         fileName: "[project]/src/components/UI/OAuthBtns.tsx",
-                        lineNumber: 171,
+                        lineNumber: 138,
                         columnNumber: 17
                     }, ("TURBOPACK compile-time value", void 0))
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/UI/OAuthBtns.tsx",
-                lineNumber: 169,
+                lineNumber: 136,
                 columnNumber: 13
             }, ("TURBOPACK compile-time value", void 0))
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/UI/OAuthBtns.tsx",
-        lineNumber: 160,
+        lineNumber: 129,
         columnNumber: 9
     }, ("TURBOPACK compile-time value", void 0));
 };

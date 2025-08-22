@@ -50,7 +50,7 @@ const Button = styled.button`
     
     img {
         user-drag: none;
-        -webkit-user-drag: none;
+        -webkit-user-drag: none;с≠
     }
 `;
 
