@@ -14,6 +14,8 @@ import hmac
 import hashlib
 import time
 import re
+import json
+import base64
 from collections import defaultdict
 import requests
 from django.db.models import Q
@@ -596,11 +598,12 @@ class VKIDAuthView(APIView):
             if not client_id or not client_secret or not redirect_uri:
                 return Response({'detail': 'VK ID не настроен на сервере (проверьте VK_APP_ID, VK_APP_SECRET, VK_REDIRECT_URI).'},
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            # Обмен кода на access_token
+            # Обмен кода на токены через VK ID (OAuth2)
             try:
-                r = requests.get(
-                    'https://oauth.vk.com/access_token',
-                    params={
+                r = requests.post(
+                    'https://id.vk.com/oauth2/token',
+                    data={
+                        'grant_type': 'authorization_code',
                         'client_id': client_id,
                         'client_secret': client_secret,
                         'redirect_uri': redirect_uri,
@@ -619,14 +622,28 @@ class VKIDAuthView(APIView):
                                 status=status.HTTP_400_BAD_REQUEST)
 
             access_token = token_data.get('access_token')
-            vk_user_id = token_data.get('user_id') or token_data.get('uid')
-            email = token_data.get('email') or ''  # приходит, только если запрошен scope=email
-            if not vk_user_id:
-                return Response({'detail': 'VK не вернул user_id.'}, status=status.HTTP_400_BAD_REQUEST)
+            id_token = token_data.get('id_token')
+            vk_user_id = token_data.get('user_id') or token_data.get('uid')  # может отсутствовать для VK ID
+            email = token_data.get('email') or ''
 
-            # Подтягиваем базовую информацию о пользователе VK
+            # Пытаемся извлечь профиль из id_token (JWT)
             try:
-                if access_token:
+                if id_token:
+                    parts = id_token.split('.')
+                    if len(parts) >= 2:
+                        payload_b64 = parts[1] + '=' * (-len(parts[1]) % 4)
+                        payload = json.loads(base64.urlsafe_b64decode(payload_b64.encode()).decode())
+                        vk_user_id = payload.get('sub') or vk_user_id
+                        first_name = payload.get('given_name') or payload.get('first_name') or first_name
+                        last_name = payload.get('family_name') or payload.get('last_name') or last_name
+                        photo_url = payload.get('picture') or photo_url
+                        email = payload.get('email') or email
+            except Exception:
+                pass
+
+            # Фолбэк: users.get, если id или ФИО не удалось получить
+            if access_token and (not vk_user_id or not first_name or not last_name):
+                try:
                     r2 = requests.get(
                         'https://api.vk.com/method/users.get',
                         params={'access_token': access_token, 'v': '5.131', 'fields': 'photo_100'},
@@ -635,11 +652,15 @@ class VKIDAuthView(APIView):
                     j2 = r2.json()
                     if isinstance(j2, dict) and isinstance(j2.get('response'), list) and j2['response']:
                         u = j2['response'][0]
-                        first_name = u.get('first_name') or ''
-                        last_name = u.get('last_name') or ''
-                        photo_url = u.get('photo_100') or ''
-            except Exception:
-                pass
+                        vk_user_id = u.get('id') or vk_user_id
+                        first_name = u.get('first_name') or first_name
+                        last_name = u.get('last_name') or last_name
+                        photo_url = u.get('photo_100') or photo_url
+                except Exception:
+                    pass
+
+            if not vk_user_id:
+                return Response({'detail': 'VK не вернул user_id.'}, status=status.HTTP_400_BAD_REQUEST)
 
         elif access_token_in:
             access_token = str(access_token_in)
