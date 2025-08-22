@@ -21,6 +21,21 @@ from django.db.models import Q
 class RegisterView(generics.CreateAPIView):
     serializer_class = ParticipantSerializer
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        participant = serializer.save()
+        # Авторизуем пользователя в текущей сессии сразу после регистрации
+        try:
+            login(request, participant.user)
+        except Exception:
+            pass
+        # Возвращаем прежний формат ответа + csrftoken для дальнейших запросов в этой сессии
+        data = ParticipantSerializer(participant).data
+        data['csrftoken'] = get_token(request)
+        headers = self.get_success_headers(serializer.data)
+        return Response(data, status=status.HTTP_201_CREATED, headers=headers)
+
 
 class LoginView(APIView):
     def post(self, request):
