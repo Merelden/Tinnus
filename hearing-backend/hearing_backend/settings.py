@@ -181,14 +181,14 @@ SECURE_SSL_REDIRECT = True
 CSRF_COOKIE_HTTPONLY = False
 SESSION_COOKIE_HTTPONLY = True
 # Telegram Login Widget
-TELEGRAM_BOT_TOKEN = '7993827778:AAFb8m1ZBnLlu-Kn3LqraQSQFNO-RmA7qfs'
+TELEGRAM_BOT_TOKEN = '8435632591:AAGd7w1dWivIVka7tfV_TBHzbJztCulCRv4'
 TELEGRAM_LOGIN_MAX_AGE = 86400
 
 # VK ID OAuth settings (fill with real values)
 #VK_APP_ID = 54067159
 VK_APP_ID = 54067159
 # Берём секрет из переменной окружения (обязательно задайте VK_APP_SECRET на сервере)
-VK_APP_SECRET = os.getenv('VK_APP_SECRET', '')
+VK_APP_SECRET = '1C30qbqAT0SSptS5fWoV'
 # redirect_uri должен совпадать с тем, что настроено в VK и что указывает виджет
 VK_REDIRECT_URI = 'https://neurotinnitus.ru'
 

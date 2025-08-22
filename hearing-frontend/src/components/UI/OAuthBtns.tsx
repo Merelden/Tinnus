@@ -87,7 +87,7 @@ const OAuthBtns = () => {
             // Рендер виджета в контейнер
             oneTap.render({
                 container: document.getElementById('vk-id-container'),
-                showAlternativeLogin: true,
+    
                 skin: 'secondary',
                 styles: {
                     borderRadius: 10,
