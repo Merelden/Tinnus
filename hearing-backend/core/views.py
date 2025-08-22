@@ -482,7 +482,8 @@ class TelegramAuthView(APIView):
                 user.save(update_fields=['first_name', 'last_name'])
 
         # Устанавливаем сессию и отдаём CSRF-токен
-        login(request, user)
+        # Явно указываем backend, чтобы избежать ошибки при логине без authenticate
+        login(request, user, backend='django.contrib.auth.backends.ModelBackend')
         data = {
             'new_user': created,
             'csrftoken': get_token(request),
