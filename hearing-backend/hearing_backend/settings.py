@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 from django.conf.global_settings import CSRF_COOKIE_HTTPONLY, SESSION_COOKIE_HTTPONLY
 
@@ -183,7 +184,7 @@ TELEGRAM_LOGIN_MAX_AGE = 86400
 
 # VK ID OAuth settings (fill with real values)
 VK_APP_ID = 54067159
-# Секрет нужно хранить в переменных окружения; здесь как плейсхолдер
-VK_APP_SECRET = 'mysecret'
+# Берём секрет из переменной окружения (обязательно задайте VK_APP_SECRET на сервере)
+VK_APP_SECRET = os.getenv('VK_APP_SECRET', '')
 # redirect_uri должен совпадать с тем, что настроено в VK и что указывает виджет
 VK_REDIRECT_URI = 'https://neurotinnitus.ru'
