@@ -303,7 +303,8 @@ class TestAdmin(ModelAdmin):
             # Шапка
             admin_headers = ['№', 'Код участника', 'ФИО', 'Email', 'Возраст', 'Телефон', 'Группа']
             question_headers = [f"Q{(q_index.get(qid, {}).get('number') or qid):02d}" for qid in qids]
-            score_headers = ['Итого баллов'] + sections
+            # добавим колонку "Отзыв" в конце
+            score_headers = ['Итого баллов'] + sections + ['Отзыв']
 
             ds = tablib.Dataset()
             ds.title = f'День {day}'
@@ -352,6 +353,9 @@ class TestAdmin(ModelAdmin):
                 row.append(getattr(t, 'total_score', 0))
                 scores = getattr(t, 'scores_by_section', None) or {}
                 row.extend([scores.get(sec, 0) for sec in sections])
+
+                # Отзыв по дню, если есть
+                row.append(getattr(t, 'feedback', '') or '')
 
                 ds.append(row)
 

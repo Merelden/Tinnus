@@ -331,6 +331,63 @@ class CalmingVideoView(APIView):
         return Response(self._response_for(phase, segment))
 
 
+class FeedbackSubmitView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        # Accepts JSON: { "feedback": "..." } (alias: "text")
+        try:
+            participant = Participant.objects.get(user=request.user)
+        except Participant.DoesNotExist:
+            return Response({'detail': 'Участник не найден.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Determine current study day based on registration date
+        today = timezone.localdate()
+        start_date = timezone.localtime(participant.created_at).date() if participant.created_at else today
+        day = (today - start_date).days + 1
+        if day < 1:
+            day = 1
+
+        allowed_days = [1, 15] if participant.study_group == 15 else [1, 15, 30]
+        if day not in allowed_days:
+            return Response({'detail': f'Отзыв можно оставить только в дни {allowed_days}. Сегодняшний день: {day}.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        text = request.data.get('feedback')
+        if text is None or (isinstance(text, str) and not text.strip()):
+            text = request.data.get('text')
+        if text is None or (isinstance(text, str) and not text.strip()):
+            return Response({'feedback': ['Это поле обязательно. Передайте непустой текст.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Save latest feedback on participant
+        participant.feedback = str(text)
+        participant.save(update_fields=['feedback'])
+
+        # Ensure a Test exists for this day; store feedback there as well
+        test_obj, created = Test.objects.get_or_create(
+            participant=participant,
+            day=day,
+            defaults={
+                'answers': [],
+                'total_score': 0,
+                'scores_by_section': {},
+            }
+        )
+        if not created:
+            test_obj.feedback = str(text)
+            test_obj.save(update_fields=['feedback'])
+        else:
+            # set feedback for newly created record
+            test_obj.feedback = str(text)
+            test_obj.save(update_fields=['feedback'])
+
+        return Response({
+            'saved': True,
+            'day': day,
+            'study_group': participant.study_group,
+            'feedback': str(text),
+        })
+
+
 class TelegramAuthView(APIView):
     """
     Авторизация через Telegram Login Widget.

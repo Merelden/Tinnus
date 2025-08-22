@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import RegisterView, LoginView, TelegramAuthView, QuestionsView, StreakView, CsrfView, SubmitTestView, MyTestsSummaryView, MyTestByDayView, AuthStatusView, CalmingVideoView
+from .views import RegisterView, LoginView, TelegramAuthView, QuestionsView, StreakView, CsrfView, SubmitTestView, MyTestsSummaryView, MyTestByDayView, AuthStatusView, CalmingVideoView, FeedbackSubmitView
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
@@ -29,4 +29,7 @@ urlpatterns = [
 
     # Calming video segment endpoint
     path('calming/', CalmingVideoView.as_view(), name='calming_video'),
+
+    # Feedback endpoint
+    path('feedback/submit/', FeedbackSubmitView.as_view(), name='feedback_submit'),
 ]

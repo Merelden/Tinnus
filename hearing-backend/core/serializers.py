@@ -106,4 +106,4 @@ class QuestionSerializer(serializers.ModelSerializer):
 class TestSerializer(serializers.ModelSerializer):
     class Meta:
         model = Test
-        fields = ['day', 'answers', 'total_score', 'scores_by_section', 'created_at']
+        fields = ['day', 'answers', 'total_score', 'scores_by_section', 'created_at', 'feedback']

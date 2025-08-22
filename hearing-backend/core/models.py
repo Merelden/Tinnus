@@ -16,6 +16,8 @@ class Participant(models.Model):
     last_visit_date = models.DateField(null=True, blank=True)
     visit_streak = models.PositiveIntegerField(default=0)
     max_visit_streak = models.PositiveIntegerField(default=0)
+    # User feedback (latest submitted text on allowed days)
+    feedback = models.TextField(blank=True, null=True)
 
     def save(self, *args, **kwargs):
         if not self.pk:
@@ -67,6 +69,7 @@ class Test(models.Model):
     total_score = models.IntegerField(default=0)
     scores_by_section = models.JSONField(default=dict)
     created_at = models.DateTimeField(auto_now_add=True)
+    feedback = models.TextField(blank=True, null=True)
 
     class Meta:
         unique_together = ['participant', 'day']
