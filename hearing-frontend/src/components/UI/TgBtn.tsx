@@ -3,6 +3,7 @@ import styled from "styled-components";
 import Image from "next/image";
 import { lightGrayColor } from "@/styles/colors";
 import { TelegramIcon } from './TelegramIcon';
+import { NetworkService } from '@/api/request';
 
 export type TGUser = {
   id: number;
@@ -27,7 +28,7 @@ const Button = styled.button`
     
     img {
         user-drag: none;
-        -webkit-user-drag: none;с≠
+        -webkit-user-drag: none;
     }
 `;
 
@@ -36,18 +37,41 @@ export const TelegramLoginButton = (props: Props) => {
   const { botName, onAuthCallback } = props;
 
   useEffect(() => {
-    if (onAuthCallback != null) {
-      (window as any).TelegramOnAuthCb = (user: TGUser) => onAuthCallback(user);
+    function getCookie(name: string): string | null {
+      const matches = typeof document !== 'undefined' ? document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()\[\]\\\/\+^])/g, '\\$1') + '=([^;]*)')) : null;
+      return matches ? decodeURIComponent(matches[1]) : null;
     }
 
+    (window as any).TelegramOnAuthCb = async (user: TGUser) => {
+      try {
+        if (onAuthCallback) onAuthCallback(user);
+        await NetworkService.csrf();
+        const csrftoken = getCookie('csrftoken') || '';
+        const res = await fetch('/api/auth/telegram/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken,
+          },
+          credentials: 'include',
+          body: JSON.stringify(user),
+        });
+        const data = await res.json().catch(() => ({}));
+        console.log('Telegram auth response:', data);
+      } catch (e) {
+        console.error('Telegram auth error:', e);
+      }
+    };
+
     const script = document.createElement('script');
-    script.src = 'https://telegram.org/js/telegram-widget.js?21';
+    script.src = 'https://telegram.org/js/telegram-widget.js?22';
     script.async = true;
 
     script.setAttribute('data-telegram-login', botName);
     script.setAttribute('data-request-access', 'write');
     script.setAttribute('data-onauth', 'TelegramOnAuthCb(user)');
     script.setAttribute('data-lang', 'ru');
+    script.setAttribute('data-size', 'medium');
 
     _containerRef.current?.appendChild(script);
 
@@ -55,7 +79,7 @@ export const TelegramLoginButton = (props: Props) => {
       _containerRef.current?.removeChild(script);
       (window as any).TelegramOnAuthCb = undefined;
     };
-  }, []);
+  }, [botName, onAuthCallback]);
 
   return (
     <div className="relative w-[300px]">
@@ -64,10 +88,15 @@ export const TelegramLoginButton = (props: Props) => {
         style={{
           pointerEvents: 'none',
           background: 'var(--background-gradient-telegram-button)',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
         }}
-        leftSlot={<TelegramIcon />}
-        label="Войти с Telegram"
-      />
+      >
+        <TelegramIcon />
+        <span>Войти с Telegram</span>
+      </Button>
     </div>
   );
 };
