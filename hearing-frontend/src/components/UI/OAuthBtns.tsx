@@ -35,11 +35,6 @@ const WrapperButtons = styled.div`
     justify-content: center;
     align-items: center;
     gap: 20px;
-    .btnAuth{
-        width: 200px;
-        height: 40px;
-        overflow: hidden;
-    }
 `;
 
 const Button = styled.button`
@@ -96,7 +91,8 @@ const OAuthBtns = () => {
                 skin: 'secondary',
                 styles: {
                     borderRadius: 10,
-                    height: 40
+                    height: 40,
+                    width: 200
                 }
             })
             .on(VKID.WidgetEvents.ERROR, vkidOnError)

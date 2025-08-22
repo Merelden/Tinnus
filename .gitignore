@@ -2,7 +2,8 @@
 hearing-backend/db.sqlite3
 db.sqlite3
 videos/
-
+server.log
+vk.log
 # Byte-compiled / optimized / DLL files
 pycache/
 *.py[cod]
