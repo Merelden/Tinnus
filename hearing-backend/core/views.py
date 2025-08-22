@@ -582,7 +582,8 @@ class VKIDAuthView(APIView):
         """
         code = request.data.get('code')
         access_token_in = request.data.get('access_token')
-        device_id = request.data.get('device_id')  # не используется на бэкенде
+        device_id = request.data.get('device_id')  # используется при обмене кода (OneTap)
+        code_verifier = request.data.get('code_verifier') or request.data.get('codeVerifier')
 
         access_token = None
         vk_user_id = None
@@ -611,6 +612,8 @@ class VKIDAuthView(APIView):
                 }
                 if device_id:
                     payload['device_id'] = device_id
+                if code_verifier:
+                    payload['code_verifier'] = code_verifier
                 r = requests.post(
                     'https://id.vk.com/oauth2/token',
                     data=payload,
