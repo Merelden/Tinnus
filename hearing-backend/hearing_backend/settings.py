@@ -180,3 +180,10 @@ SESSION_COOKIE_HTTPONLY = True
 # Telegram Login Widget
 TELEGRAM_BOT_TOKEN = '7993827778:AAFb8m1ZBnLlu-Kn3LqraQSQFNO-RmA7qfs'
 TELEGRAM_LOGIN_MAX_AGE = 86400
+
+# VK ID OAuth settings (fill with real values)
+VK_APP_ID = 54067159
+# Секрет нужно хранить в переменных окружения; здесь как плейсхолдер
+VK_APP_SECRET = 'mysecret'
+# redirect_uri должен совпадать с тем, что настроено в VK и что указывает виджет
+VK_REDIRECT_URI = 'https://neurotinnitus.ru'

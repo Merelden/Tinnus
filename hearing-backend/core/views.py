@@ -15,6 +15,7 @@ import hashlib
 import time
 import re
 from collections import defaultdict
+import requests
 from django.db.models import Q
 
 
@@ -488,6 +489,247 @@ class TelegramAuthView(APIView):
             }
         }
 
+        try:
+            participant = Participant.objects.get(user=user)
+            data['participant'] = ParticipantSerializer(participant).data
+        except Participant.DoesNotExist:
+            pass
+
+        return Response(data)
+
+
+class CompleteProfileView(APIView):
+    """
+    Создание Participant для уже аутентифицированного пользователя (после OAuth входа).
+    POST JSON: { full_name, age, phone, email? }
+    Если у пользователя нет email, обязателен email в запросе.
+    Возвращает данные Participant и csrftoken.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        if Participant.objects.filter(user=user).exists():
+            return Response({'detail': 'Профиль уже заполнен.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        full_name = (request.data.get('full_name') or '').strip()
+        age = request.data.get('age')
+        phone = (request.data.get('phone') or '').strip()
+        email = (user.email or '').strip() or (request.data.get('email') or '').strip()
+
+        field_errors = {}
+        if not full_name:
+            field_errors['full_name'] = ['Это поле обязательно.']
+        try:
+            age = int(age)
+            if age <= 0 or age > 120:
+                field_errors['age'] = ['Недопустимое значение возраста.']
+        except (TypeError, ValueError):
+            field_errors['age'] = ['Ожидается целое число.']
+        if not phone:
+            field_errors['phone'] = ['Это поле обязательно.']
+        if not email:
+            field_errors['email'] = ['Это поле обязательно.']
+        if field_errors:
+            return Response(field_errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Валидация уникальности телефона и email
+        if Participant.objects.filter(phone=phone).exists():
+            return Response({'phone': ['Этот телефон уже занят.']}, status=status.HTTP_400_BAD_REQUEST)
+        if Participant.objects.filter(email=email).exists():
+            return Response({'email': ['Этот email уже занят.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Сохраняем email на пользователе, если пустой
+        if not user.email:
+            try:
+                user.email = email
+                user.username = user.username or email  # username уже занят для tg_/vk_, не меняем если задан
+                user.save(update_fields=['email'])
+            except Exception:
+                # Конфликт email на User уровне игнорируем для пользователя OAuth, Participant всё равно создадим
+                pass
+
+        participant = Participant.objects.create(
+            user=user,
+            full_name=full_name,
+            age=age,
+            phone=phone,
+            email=email,
+        )
+        return Response({
+            'participant': ParticipantSerializer(participant).data,
+            'csrftoken': get_token(request)
+        }, status=status.HTTP_201_CREATED)
+
+
+class VKIDAuthView(APIView):
+    """
+    Авторизация через VK ID (OAuth).
+    Рекомендуемый поток: на фронтенде НЕ вызывать exchangeCode, а пересылать нам code + device_id
+    из виджета OneTap. Мы обмениваем code на access_token через сервер VK и устанавливаем сессию.
+
+    POST JSON: { "code": "...", "device_id": "..." }
+    Ответ: как в TelegramAuthView: { new_user, csrftoken, vk_profile, participant? }
+    """
+
+    def post(self, request):
+        """
+        Поддержка двух потоков:
+        1) Рекомендованный: передан code (мы обмениваем на сервере)
+        2) Уже получен access_token на клиенте (мы валидируем его на сервере через users.get)
+        """
+        code = request.data.get('code')
+        access_token_in = request.data.get('access_token')
+        device_id = request.data.get('device_id')  # не используется на бэкенде
+
+        access_token = None
+        vk_user_id = None
+        email = ''
+        first_name = ''
+        last_name = ''
+        photo_url = ''
+
+        if code:
+            client_id = getattr(settings, 'VK_APP_ID', None)
+            client_secret = getattr(settings, 'VK_APP_SECRET', '')
+            redirect_uri = getattr(settings, 'VK_REDIRECT_URI', None)
+            if not client_id or not client_secret or not redirect_uri:
+                return Response({'detail': 'VK ID не настроен на сервере (проверьте VK_APP_ID, VK_APP_SECRET, VK_REDIRECT_URI).'},
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            # Обмен кода на access_token
+            try:
+                r = requests.get(
+                    'https://oauth.vk.com/access_token',
+                    params={
+                        'client_id': client_id,
+                        'client_secret': client_secret,
+                        'redirect_uri': redirect_uri,
+                        'code': code,
+                    },
+                    timeout=10
+                )
+                token_data = r.json()
+            except Exception:
+                return Response({'detail': 'Ошибка соединения с VK OAuth.'}, status=status.HTTP_502_BAD_GATEWAY)
+
+            if not isinstance(token_data, dict):
+                return Response({'detail': 'Некорректный ответ VK OAuth.'}, status=status.HTTP_502_BAD_GATEWAY)
+            if 'error' in token_data:
+                return Response({'detail': f"VK OAuth error: {token_data.get('error_description') or token_data.get('error')}"},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            access_token = token_data.get('access_token')
+            vk_user_id = token_data.get('user_id') or token_data.get('uid')
+            email = token_data.get('email') or ''  # приходит, только если запрошен scope=email
+            if not vk_user_id:
+                return Response({'detail': 'VK не вернул user_id.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Подтягиваем базовую информацию о пользователе VK
+            try:
+                if access_token:
+                    r2 = requests.get(
+                        'https://api.vk.com/method/users.get',
+                        params={'access_token': access_token, 'v': '5.131', 'fields': 'photo_100'},
+                        timeout=10
+                    )
+                    j2 = r2.json()
+                    if isinstance(j2, dict) and isinstance(j2.get('response'), list) and j2['response']:
+                        u = j2['response'][0]
+                        first_name = u.get('first_name') or ''
+                        last_name = u.get('last_name') or ''
+                        photo_url = u.get('photo_100') or ''
+            except Exception:
+                pass
+
+        elif access_token_in:
+            access_token = str(access_token_in)
+            # Валидируем токен реальным вызовом API и получаем профиль
+            try:
+                r2 = requests.get(
+                    'https://api.vk.com/method/users.get',
+                    params={'access_token': access_token, 'v': '5.131', 'fields': 'photo_100'},
+                    timeout=10
+                )
+                j2 = r2.json()
+            except Exception:
+                return Response({'detail': 'Ошибка соединения с VK API.'}, status=status.HTTP_502_BAD_GATEWAY)
+
+            if not isinstance(j2, dict):
+                return Response({'detail': 'Некорректный ответ VK API.'}, status=status.HTTP_502_BAD_GATEWAY)
+            if 'error' in j2:
+                # Например, просрочен/некорректен токен
+                msg = None
+                try:
+                    msg = j2.get('error', {}).get('error_msg')
+                except Exception:
+                    pass
+                return Response({'detail': f'VK API error: {msg or "invalid_token"}'}, status=status.HTTP_400_BAD_REQUEST)
+
+            resp = j2.get('response') or []
+            if not resp:
+                return Response({'detail': 'VK API не вернул профиль.'}, status=status.HTTP_400_BAD_REQUEST)
+            u = resp[0]
+            vk_user_id = u.get('id')
+            if not vk_user_id:
+                return Response({'detail': 'Не удалось определить user_id.'}, status=status.HTTP_400_BAD_REQUEST)
+            first_name = u.get('first_name') or ''
+            last_name = u.get('last_name') or ''
+            photo_url = u.get('photo_100') or ''
+            # email при токен-флоу обычно нет — можно принять из тела запроса, если фронт собрал
+            email = (request.data.get('email') or '').strip()
+        else:
+            return Response({'detail': 'Передайте code (рекомендовано) или access_token.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Создаём/находим локального пользователя и логиним
+        username = f"vk_{vk_user_id}"
+        user = User.objects.filter(username=username).first()
+        created = False
+        if not user:
+            user = User(username=username)
+            if first_name:
+                user.first_name = first_name
+            if last_name:
+                user.last_name = last_name
+            if email:
+                user.email = email
+            user.set_unusable_password()
+            try:
+                user.save()
+            except Exception:
+                # Возможен конфликт email (unique). Сбрасываем email и сохраняем снова.
+                user.email = ''
+                user.save()
+            created = True
+        else:
+            changed = False
+            if first_name and user.first_name != first_name:
+                user.first_name = first_name
+                changed = True
+            if last_name and user.last_name != last_name:
+                user.last_name = last_name
+                changed = True
+            if email and user.email != email:
+                try:
+                    user.email = email
+                    changed = True
+                    user.save(update_fields=['first_name', 'last_name', 'email'])
+                except Exception:
+                    if changed:
+                        user.save(update_fields=['first_name', 'last_name'])
+            elif changed:
+                user.save(update_fields=['first_name', 'last_name'])
+
+        login(request, user)
+        data = {
+            'new_user': created,
+            'csrftoken': get_token(request),
+            'vk_profile': {
+                'id': str(vk_user_id),
+                'first_name': first_name,
+                'last_name': last_name,
+                'photo_url': photo_url,
+            }
+        }
         try:
             participant = Participant.objects.get(user=user)
             data['participant'] = ParticipantSerializer(participant).data
