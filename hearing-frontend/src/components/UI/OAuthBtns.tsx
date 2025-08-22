@@ -102,9 +102,10 @@ const OAuthBtns = () => {
             .on(VKID.OneTapInternalEvents.LOGIN_SUCCESS, function (payload: any) {
                 const code = payload.code;
                 const deviceId = payload.device_id;
+                const codeVerifier = payload.code_verifier || payload.codeVerifier;
 
                 // Отправляем code на бэкенд
-                authWithServer(code, deviceId);
+                authWithServer(code, deviceId, codeVerifier);
             });
 
 
@@ -113,10 +114,11 @@ const OAuthBtns = () => {
                 // Обработка ошибки
                 console.error('Ошибка входа', error);
             }
-            const authWithServer = async(code, deviceId)=>{
+            const authWithServer = async(code, deviceId, codeVerifier)=>{
                 const res = await NetworkService.authVk({
                     code: code,
-                    device_id: deviceId
+                    device_id: deviceId,
+                    code_verifier: codeVerifier
                 })
                 console.log(res);
             }
