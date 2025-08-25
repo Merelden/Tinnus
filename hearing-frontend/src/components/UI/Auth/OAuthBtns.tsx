@@ -46,7 +46,7 @@ const Button = styled.button`
     
     img {
         user-drag: none;
-        -webkit-user-drag: none;с≠
+        -webkit-user-drag: none;
     }
 `;
 
@@ -56,7 +56,8 @@ const OAuthBtns = () => {
     useEffect(() => {
         // Программно загружаем скрипт SDK
         const script = document.createElement('script');
-        script.src = "https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js";
+        // Пин к стабильной версии SDK VK ID
+        script.src = "https://unpkg.com/@vkid/sdk@2.4.0/dist-sdk/umd/index.js";
         script.async = true;
         script.onload = () => {
             setIsSdkLoaded(true);  // Устанавливаем состояние, что SDK загружен
@@ -69,60 +70,72 @@ const OAuthBtns = () => {
     }, []);
 
     useEffect(() => {
-        // Проверка, что SDK загружен и готов
-        if (isSdkLoaded && (window as any).VKIDSDK) {
-            const VKID: any = (window as any).VKIDSDK;
-            const REDIRECT_URL = 'https://neurotinnitus.ru';
+        if (!isSdkLoaded || !(window as any).VKIDSDK) return;
 
-            // Инициализация SDK
-            VKID.Config.init({
-                app: 54067159,
-                redirectUrl: REDIRECT_URL,
-                responseMode: VKID.ConfigResponseMode.Callback,
-                source: VKID.ConfigSource.LOWCODE,
-                scope: 'email, vkid.personal_info'// Заполните нужными доступами по необходимости
-            });
+        const VKID: any = (window as any).VKIDSDK;
+        const REDIRECT_URL = 'https://neurotinnitus.ru';
 
-            const oneTap = new VKID.OneTap();
+        VKID.Config.init({
+            app: 54067159,
+            redirectUrl: REDIRECT_URL,
+            responseMode: VKID.ConfigResponseMode.Callback,
+            source: VKID.ConfigSource.LOWCODE,
+            scope: 'email phone',
+        });
 
-            // Рендер виджета в контейнер
-            oneTap.render({
-                container: document.getElementById('vk-id-container'),
-    
-                skin: 'secondary',
-                styles: {
-                    borderRadius: 10,
-                    height: 40,
-                    width: 200
+        const oneTap = new VKID.OneTap();
+
+        oneTap.render({
+            container: document.getElementById('vk-id-container'),
+            skin: 'secondary',
+            styles: { borderRadius: 10, height: 40, width: 200 },
+        })
+        .on(VKID.WidgetEvents.ERROR, (error) => console.error('VK Ошибка входа', error))
+        .on(VKID.OneTapInternalEvents.LOGIN_SUCCESS, async (payload: any) => {
+            console.log('VK payload:', payload);
+
+            const { code, device_id } = payload;
+            if (!code || !device_id) {
+                console.error('Пустой code или device_id', payload);
+                return;
+            }
+
+            // Попробуем client-side обмен кода
+            try {
+                if (VKID.Auth && typeof VKID.Auth.exchangeCode === 'function') {
+                    const tokenRes = await VKID.Auth.exchangeCode(code, device_id);
+                    console.log('Client-side token:', tokenRes);
+                    const dataBaba = await VKID.Auth.userInfo(tokenRes.access_token)
+                    console.log(dataBaba)
+                    try { await NetworkService.csrf(); } catch {}
+                    await NetworkService.authVk({
+                        access_token: tokenRes.access_token,
+                        id_token: tokenRes.id_token,
+                        refresh_token: tokenRes.refresh_token,
+                        user_id: tokenRes.user_id,
+                        scope: tokenRes.scope,
+                        email: tokenRes.email || '',
+                    });
+                    return;
                 }
-            })
-            .on(VKID.WidgetEvents.ERROR, vkidOnError)
-            .on(VKID.OneTapInternalEvents.LOGIN_SUCCESS, function (payload: any) {
-                const code = payload.code;
-                const deviceId = payload.device_id;
-                const codeVerifier = payload.code_verifier || payload.codeVerifier;
-
-                // Отправляем code на бэкенд
-                authWithServer(code, deviceId, codeVerifier, REDIRECT_URL);
-            });
-
-
-
-            function vkidOnError(error) {
-                // Обработка ошибки
-                console.error('Ошибка входа', error);
+            } catch (err) {
+                console.error('VK exchangeCode error:', err);
             }
-            const authWithServer = async(code, deviceId, codeVerifier, redirectUri)=>{
+
+            // Server-side fallback
+            try {
                 const res = await NetworkService.authVk({
-                    code: code,
-                    device_id: deviceId,
-                    code_verifier: codeVerifier,
-                    redirect_uri: redirectUri
-                })
-                console.log(res);
+                    code,
+                    device_id,
+                    redirect_uri: REDIRECT_URL,
+                });
+                console.log('Server-side auth result:', res);
+            } catch (err) {
+                console.error('Server-side VK auth error:', err.response?.data || err);
             }
-        }
+        });
     }, [isSdkLoaded]);
+
 
     return (
         <Wrapper>

@@ -571,53 +571,41 @@ class CompleteProfileView(APIView):
 
 class VKIDAuthView(APIView):
     """
-    Авторизация через VK ID (OAuth).
-    Рекомендуемый поток: на фронтенде НЕ вызывать exchangeCode, а пересылать нам code + device_id
-    из виджета OneTap. Мы обмениваем code на access_token через сервер VK и устанавливаем сессию.
-
-    POST JSON: { "code": "...", "device_id": "..." }
-    Ответ: как в TelegramAuthView: { new_user, csrftoken, vk_profile, participant? }
+    Авторизация через VK ID (OAuth2 / OneTap)
+    POST JSON: { code?, access_token?, device_id?, id_token?, first_name?, last_name?, email?, picture? }
     """
-
     def post(self, request):
-        """
-        Поддержка двух потоков:
-        1) Рекомендованный: передан code (мы обмениваем на сервере)
-        2) Уже получен access_token на клиенте (мы валидируем его на сервере через users.get)
-        """
         code = request.data.get('code')
         access_token_in = request.data.get('access_token')
-        device_id = request.data.get('device_id')  # используется при обмене кода (OneTap)
+        device_id = request.data.get('device_id')
         code_verifier = request.data.get('code_verifier') or request.data.get('codeVerifier')
         redirect_uri_override = (request.data.get('redirect_uri') or '').strip()
 
         access_token = None
         vk_user_id = None
-        email = ''
         first_name = ''
         last_name = ''
+        email = ''
         photo_url = ''
 
+        # --- Получение токена и профиля через code ---
         if code:
             client_id = getattr(settings, 'VK_APP_ID', None)
             client_secret = getattr(settings, 'VK_APP_SECRET', '')
             redirect_uri = getattr(settings, 'VK_REDIRECT_URI', None)
-            # Разрешаем переопределить redirect_uri, если пришёл допустимый вариант (например, www-домен)
             allowed_redirects = {str(getattr(settings, 'VK_REDIRECT_URI', '')).strip(), 'https://www.neurotinnitus.ru'}
             if redirect_uri_override and redirect_uri_override in allowed_redirects:
                 redirect_uri = redirect_uri_override
+
             if not client_id or not client_secret or not redirect_uri:
-                vk_logger.error(f"VK config missing: client_id={client_id}, has_secret={bool(client_secret)}, redirect_uri={redirect_uri}")
-                return Response({'detail': 'VK ID не настроен на сервере (проверьте VK_APP_ID, VK_APP_SECRET, VK_REDIRECT_URI).'},
-                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            # Обмен кода на токены через VK ID (OAuth2)
+                vk_logger.error(f"VK config missing: client_id={client_id}, secret={bool(client_secret)}, redirect_uri={redirect_uri}")
+                return Response({'detail': 'VK ID не настроен на сервере.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
             token_data = None
-            last_error = None
             try:
                 payload = {
                     'grant_type': 'authorization_code',
                     'client_id': client_id,
-                    'client_secret': client_secret,
                     'redirect_uri': redirect_uri,
                     'code': code,
                 }
@@ -625,179 +613,95 @@ class VKIDAuthView(APIView):
                     payload['device_id'] = device_id
                 if code_verifier:
                     payload['code_verifier'] = code_verifier
-                vk_logger.info(f"VK token request payload: keys={list(payload.keys())}, redirect_uri={redirect_uri}")
-                r = requests.post(
-                    'https://id.vk.com/oauth2/token',
-                    data=payload,
-                    timeout=10
-                )
-                vk_logger.info(f"VK token response status={r.status_code}, body={r.text[:500]}")
+                else:
+                    payload['client_secret'] = client_secret
+
+                r = requests.post('https://id.vk.com/oauth2/token', data=payload, timeout=10)
                 token_data = r.json()
             except Exception as e:
-                last_error = e
-                vk_logger.exception(f"VK token exchange exception: {e}")
+                vk_logger.exception(f"VK token exchange error: {e}")
+                return Response({'detail': 'Ошибка соединения с VK OAuth.'}, status=status.HTTP_502_BAD_GATEWAY)
 
-            # Fallback на старый endpoint, если не удалось соединиться с id.vk.com
-            if token_data is None:
-                try:
-                    r = requests.get(
-                        'https://oauth.vk.com/access_token',
-                        params={
-                            'client_id': client_id,
-                            'client_secret': client_secret,
-                            'redirect_uri': redirect_uri,
-                            'code': code,
-                        },
-                        timeout=10
-                    )
-                    vk_logger.info(f"VK legacy token response status={r.status_code}, body={r.text[:500]}")
-                    token_data = r.json()
-                except Exception as e2:
-                    err_msg = f"Ошибка соединения с VK OAuth: {str(last_error or e2)}"
-                    vk_logger.exception(err_msg)
-                    return Response({'detail': err_msg}, status=status.HTTP_502_BAD_GATEWAY)
-
-            if not isinstance(token_data, dict):
-                vk_logger.error(f"VK token response is not JSON dict: {token_data}")
-                return Response({'detail': 'Некорректный ответ VK OAuth.'}, status=status.HTTP_502_BAD_GATEWAY)
-            if 'error' in token_data:
+            if not isinstance(token_data, dict) or 'error' in token_data:
                 vk_logger.warning(f"VK OAuth error: {token_data}")
-                return Response({'detail': f"VK OAuth error: {token_data.get('error_description') or token_data.get('error')}"},
-                                status=status.HTTP_400_BAD_REQUEST)
+                return Response({'detail': f"VK OAuth error: {token_data.get('error_description') or token_data.get('error')}"}, status=status.HTTP_400_BAD_REQUEST)
 
             access_token = token_data.get('access_token')
             id_token = token_data.get('id_token')
-            vk_user_id = token_data.get('user_id') or token_data.get('uid')  # может отсутствовать для VK ID
+            vk_user_id = token_data.get('user_id') or token_data.get('uid')
             email = token_data.get('email') or ''
 
-            # Пытаемся извлечь профиль из id_token (JWT)
-            try:
-                if id_token:
+            # Парсим id_token
+            if id_token:
+                try:
                     parts = id_token.split('.')
                     if len(parts) >= 2:
                         payload_b64 = parts[1] + '=' * (-len(parts[1]) % 4)
-                        payload = json.loads(base64.urlsafe_b64decode(payload_b64.encode()).decode())
-                        vk_user_id = payload.get('sub') or vk_user_id
-                        first_name = payload.get('given_name') or payload.get('first_name') or first_name
-                        last_name = payload.get('family_name') or payload.get('last_name') or last_name
-                        photo_url = payload.get('picture') or photo_url
-                        email = payload.get('email') or email
-                        vk_logger.info(f"VK id_token parsed: has_sub={bool(vk_user_id)}, has_name={bool(first_name or last_name)}, has_email={bool(email)}")
-            except Exception as e:
-                vk_logger.exception(f"Failed to parse id_token: {e}")
-
-            # Фолбэк: users.get, если id или ФИО не удалось получить
-            if access_token and (not vk_user_id or not first_name or not last_name):
-                try:
-                    r2 = requests.get(
-                        'https://api.vk.com/method/users.get',
-                        params={'access_token': access_token, 'v': '5.131', 'fields': 'photo_100'},
-                        timeout=10
-                    )
-                    vk_logger.info(f"VK users.get status={r2.status_code}, body={r2.text[:500]}")
-                    j2 = r2.json()
-                    if isinstance(j2, dict) and isinstance(j2.get('response'), list) and j2['response']:
-                        u = j2['response'][0]
-                        vk_user_id = u.get('id') or vk_user_id
-                        first_name = u.get('first_name') or first_name
-                        last_name = u.get('last_name') or last_name
-                        photo_url = u.get('photo_100') or photo_url
+                        payload_json = json.loads(base64.urlsafe_b64decode(payload_b64.encode()).decode())
+                        vk_user_id = payload_json.get('sub') or vk_user_id
+                        first_name = payload_json.get('given_name') or payload_json.get('first_name') or first_name
+                        last_name = payload_json.get('family_name') or payload_json.get('last_name') or last_name
+                        photo_url = payload_json.get('picture') or photo_url
+                        email = payload_json.get('email') or email
                 except Exception as e:
-                    vk_logger.exception(f"users.get exception: {e}")
+                    vk_logger.exception(f"Failed to parse id_token: {e}")
 
-            if not vk_user_id:
-                vk_logger.error("No vk_user_id after token/id_token/users.get")
-                return Response({'detail': 'VK не вернул user_id.'}, status=status.HTTP_400_BAD_REQUEST)
-
+        # --- flow через access_token ---
         elif access_token_in:
             access_token = str(access_token_in)
-            # Валидируем токен реальным вызовом API и получаем профиль
-            try:
-                r2 = requests.get(
-                    'https://api.vk.com/method/users.get',
-                    params={'access_token': access_token, 'v': '5.131', 'fields': 'photo_100'},
-                    timeout=10
-                )
-                j2 = r2.json()
-            except Exception:
-                return Response({'detail': 'Ошибка соединения с VK API.'}, status=status.HTTP_502_BAD_GATEWAY)
-
-            if not isinstance(j2, dict):
-                return Response({'detail': 'Некорректный ответ VK API.'}, status=status.HTTP_502_BAD_GATEWAY)
-            if 'error' in j2:
-                # Например, просрочен/некорректен токен
-                msg = None
+            id_token_in = request.data.get('id_token') or request.data.get('idToken')
+            if id_token_in:
                 try:
-                    msg = j2.get('error', {}).get('error_msg')
-                except Exception:
-                    pass
-                return Response({'detail': f'VK API error: {msg or "invalid_token"}'}, status=status.HTTP_400_BAD_REQUEST)
+                    parts = id_token_in.split('.')
+                    if len(parts) >= 2:
+                        payload_b64 = parts[1] + '=' * (-len(parts[1]) % 4)
+                        payload_json = json.loads(base64.urlsafe_b64decode(payload_b64.encode()).decode())
+                        vk_user_id = payload_json.get('sub') or vk_user_id
+                        first_name = payload_json.get('given_name') or payload_json.get('first_name') or first_name
+                        last_name = payload_json.get('family_name') or payload_json.get('last_name') or last_name
+                        photo_url = payload_json.get('picture') or photo_url
+                        email = payload_json.get('email') or email
+                except Exception as e:
+                    vk_logger.exception(f"Failed to parse id_token (access_token flow): {e}")
 
-            resp = j2.get('response') or []
-            if not resp:
-                return Response({'detail': 'VK API не вернул профиль.'}, status=status.HTTP_400_BAD_REQUEST)
-            u = resp[0]
-            vk_user_id = u.get('id')
-            if not vk_user_id:
-                return Response({'detail': 'Не удалось определить user_id.'}, status=status.HTTP_400_BAD_REQUEST)
-            first_name = u.get('first_name') or ''
-            last_name = u.get('last_name') or ''
-            photo_url = u.get('photo_100') or ''
-            # email при токен-флоу обычно нет — можно принять из тела запроса, если фронт собрал
-            email = (request.data.get('email') or '').strip()
         else:
-            return Response({'detail': 'Передайте code (рекомендовано) или access_token.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'Передайте code или access_token.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Создаём/находим локального пользователя и логиним
+        # --- Берем данные, пришедшие с фронта ---
+        first_name = (request.data.get('first_name') or request.data.get('firstName') or first_name or '').strip()
+        last_name = (request.data.get('last_name') or request.data.get('lastName') or last_name or '').strip()
+        photo_url = (request.data.get('picture') or request.data.get('photo_url') or photo_url or '').strip()
+        email = (request.data.get('email') or email or '').strip()
+        vk_user_id = str(request.data.get('user_id') or vk_user_id)
+
+        if not vk_user_id:
+            return Response({'detail': 'VK не вернул user_id.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # --- Создание или обновление пользователя ---
         username = f"vk_{vk_user_id}"
-        user = User.objects.filter(username=username).first()
-        created = False
-        if not user:
-            user = User(username=username)
-            if first_name:
-                user.first_name = first_name
-            if last_name:
-                user.last_name = last_name
-            if email:
-                user.email = email
+        user, created = User.objects.get_or_create(username=username)
+        user.first_name = first_name or user.first_name
+        user.last_name = last_name or user.last_name
+        user.email = email or user.email
+        if created:
             user.set_unusable_password()
-            try:
-                user.save()
-            except Exception:
-                # Возможен конфликт email (unique). Сбрасываем email и сохраняем снова.
-                user.email = ''
-                user.save()
-            created = True
-        else:
-            changed = False
-            if first_name and user.first_name != first_name:
-                user.first_name = first_name
-                changed = True
-            if last_name and user.last_name != last_name:
-                user.last_name = last_name
-                changed = True
-            if email and user.email != email:
-                try:
-                    user.email = email
-                    changed = True
-                    user.save(update_fields=['first_name', 'last_name', 'email'])
-                except Exception:
-                    if changed:
-                        user.save(update_fields=['first_name', 'last_name'])
-            elif changed:
-                user.save(update_fields=['first_name', 'last_name'])
+        user.save(update_fields=['first_name', 'last_name', 'email'])
 
-        login(request, user)
+        # Логиним пользователя
+        login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+
         data = {
             'new_user': created,
             'csrftoken': get_token(request),
             'vk_profile': {
-                'id': str(vk_user_id),
+                'id': vk_user_id,
                 'first_name': first_name,
                 'last_name': last_name,
                 'photo_url': photo_url,
             }
         }
+
+        # Добавляем participant, если есть
         try:
             participant = Participant.objects.get(user=user)
             data['participant'] = ParticipantSerializer(participant).data
