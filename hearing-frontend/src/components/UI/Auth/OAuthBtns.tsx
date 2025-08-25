@@ -46,7 +46,7 @@ const Button = styled.button`
     
     img {
         user-drag: none;
-        -webkit-user-drag: none;
+        -webkit-user-drag: none;с≠
     }
 `;
 
@@ -80,7 +80,7 @@ const OAuthBtns = () => {
                 redirectUrl: REDIRECT_URL,
                 responseMode: VKID.ConfigResponseMode.Callback,
                 source: VKID.ConfigSource.LOWCODE,
-                scope: 'email phone'
+                scope: 'email, vkid.personal_info'// Заполните нужными доступами по необходимости
             });
 
             const oneTap = new VKID.OneTap();
@@ -100,9 +100,10 @@ const OAuthBtns = () => {
             .on(VKID.OneTapInternalEvents.LOGIN_SUCCESS, function (payload: any) {
                 const code = payload.code;
                 const deviceId = payload.device_id;
+                const codeVerifier = payload.code_verifier || payload.codeVerifier;
 
                 // Отправляем code на бэкенд
-                authWithServer(code, deviceId, REDIRECT_URL);
+                authWithServer(code, deviceId, codeVerifier, REDIRECT_URL);
             });
 
 
@@ -111,10 +112,11 @@ const OAuthBtns = () => {
                 // Обработка ошибки
                 console.error('Ошибка входа', error);
             }
-            const authWithServer = async(code, deviceId, redirectUri)=>{
+            const authWithServer = async(code, deviceId, codeVerifier, redirectUri)=>{
                 const res = await NetworkService.authVk({
                     code: code,
                     device_id: deviceId,
+                    code_verifier: codeVerifier,
                     redirect_uri: redirectUri
                 })
                 console.log(res);
