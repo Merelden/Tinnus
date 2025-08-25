@@ -3,9 +3,9 @@
 import Link from "next/link";
 import WindowBlock from "@/components/UI/WindowBlock";
 import {AuthForm, BackgroundPage} from "@/app/(auth)/page.styled";
-import InputAuth from "@/components/UI/InputAuth";
+import InputAuth from "@/components/UI/Auth/InputAuth";
 import {FormEvent, useEffect, useState} from "react";
-import OAuthBtns from "@/components/UI/OAuthBtns";
+import OAuthBtns from "@/components/UI/Auth/OAuthBtns";
 import {NetworkService} from "@/api/request";
 import {useRouter} from "next/navigation";
 
