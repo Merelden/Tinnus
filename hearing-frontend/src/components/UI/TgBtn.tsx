@@ -51,6 +51,8 @@ export const TelegramLoginButton = (props: Props) => {
           method: 'POST',
           headers: {
             'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
           },
           credentials: 'include',
           body: JSON.stringify(user),

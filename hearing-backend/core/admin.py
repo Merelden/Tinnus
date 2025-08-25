@@ -2,6 +2,7 @@ from django.contrib import admin
 from unfold.admin import ModelAdmin
 from .models import Participant, Progress, Test, Exercise, Question, QuestionOption, CalmingVideoSegment
 from django.contrib.auth.models import User
+from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html
 from django.http import HttpResponse
@@ -459,3 +460,22 @@ class QuestionAdmin(ModelAdmin):
     search_fields = ('text',)
     list_filter = ('type',)
     inlines = [QuestionOptionInline]
+
+# --- Explicitly (re)register User admin to ensure delete is available ---
+try:
+    admin.site.unregister(User)
+except Exception:
+    pass
+
+@admin.register(User)
+class CustomUserAdmin(DjangoUserAdmin, ModelAdmin):
+    actions = ['delete_selected']
+
+    def has_delete_permission(self, request, obj=None):
+        # Superusers can delete any user. Staff need the delete_user permission and
+        # cannot delete superusers.
+        if request.user.is_superuser:
+            return True
+        if obj is not None and getattr(obj, 'is_superuser', False):
+            return False
+        return request.user.has_perm('auth.delete_user')
