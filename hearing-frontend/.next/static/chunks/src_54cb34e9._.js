@@ -342,7 +342,6 @@ const TelegramLoginButton = (props)=>{
                         const res = await fetch('/api/auth/telegram/', {
                             method: 'POST',
                             headers: {
-                                'Content-Type': 'application/json',
                                 'X-CSRFToken': csrftoken
                             },
                             credentials: 'include',
@@ -388,12 +387,12 @@ const TelegramLoginButton = (props)=>{
             ref: _containerRef
         }, void 0, false, {
             fileName: "[project]/src/components/UI/TgBtn.tsx",
-            lineNumber: 88,
+            lineNumber: 87,
             columnNumber: 7
         }, ("TURBOPACK compile-time value", void 0))
     }, void 0, false, {
         fileName: "[project]/src/components/UI/TgBtn.tsx",
-        lineNumber: 87,
+        lineNumber: 86,
         columnNumber: 5
     }, ("TURBOPACK compile-time value", void 0));
 };
