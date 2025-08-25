@@ -179,7 +179,7 @@ function _templateObject() {
 }
 function _templateObject1() {
     const data = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_tagged_template_literal$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"])([
-        "\n    display: flex;\n    justify-content: center;\n    align-items: center;\n    flex-direction: column;\n    gap: 10px;\n    p{\n        width: 920px;\n        margin-bottom: 32px;\n    }\n    @media (max-width: 1000px) {\n        p{\n            width: 100%;\n            font-size: 16px;\n        }\n    }\n    @media (max-width: 600px) {\n        h2{\n           text-wrap: auto;\n        }\n        p{\n            font-size: 14px;\n        }\n    }\n    @media (max-width: 400px) {\n        h2{\n            font-size: 18px;\n        }\n        p{\n            font-size: 10px;\n        }\n    }\n"
+        "\n    display: flex;\n    justify-content: center;\n    align-items: center;\n    flex-direction: column;\n    gap: 10px;\n    p{\n        width: 920px;\n        margin-bottom: 32px;\n    }\n    @media (max-width: 1000px) {\n        p{\n            width: 100%;\n            font-size: 16px;\n        }\n    }\n    @media (max-width: 600px) {\n        h2{\n           text-wrap: wrap;\n        }\n        p{\n            font-size: 14px;\n        }\n    }\n    @media (max-width: 400px) {\n        h2{\n            font-size: 18px;\n        }\n        p{\n            font-size: 10px;\n        }\n    }\n"
     ]);
     _templateObject1 = function() {
         return data;

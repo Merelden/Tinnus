@@ -188,7 +188,7 @@ TELEGRAM_LOGIN_MAX_AGE = 86400
 #VK_APP_ID = 54067159
 VK_APP_ID = 54067159
 # Берём секрет из переменной окружения (обязательно задайте VK_APP_SECRET на сервере)
-VK_APP_SECRET = '1C30qbqAT0SSptS5fWoV'
+VK_APP_SECRET = 'ky7iylNsUmMGcQCWlzuv'
 # redirect_uri должен совпадать с тем, что настроено в VK и что указывает виджет
 VK_REDIRECT_URI = 'https://neurotinnitus.ru'
 

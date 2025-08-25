@@ -4,6 +4,7 @@ import Image from "next/image";
 import { lightGrayColor, textColor } from "@/styles/colors";
 
 import { NetworkService } from '@/api/request';
+import { TelegramLoginButton } from './TgBtn';
 
 const Wrapper = styled.div`
     width: 100%;
@@ -133,9 +134,7 @@ const OAuthBtns = () => {
             </WrapperOr>
             <WrapperButtons>
                     <div id="vk-id-container" className='btnAuth'></div>
-                <Button>
-                    <Image width={110} height={25} src={'/icons/auth/tg-auth.svg'} alt={'Телеграм'} />
-                </Button>
+                <TelegramLoginButton botName='neurotinnitus_bot' />
             </WrapperButtons>
             
         </Wrapper>

@@ -50,7 +50,6 @@ export const TelegramLoginButton = (props: Props) => {
         const res = await fetch('/api/auth/telegram/', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
             'X-CSRFToken': csrftoken,
           },
           credentials: 'include',
