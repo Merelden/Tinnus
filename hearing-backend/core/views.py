@@ -20,6 +20,7 @@ from collections import defaultdict
 import requests
 from django.db.models import Q
 import logging
+from datetime import datetime, date
 
 vk_logger = logging.getLogger('vk')
 server_logger = logging.getLogger(__name__)
@@ -587,6 +588,8 @@ class VKIDAuthView(APIView):
         last_name = ''
         email = ''
         photo_url = ''
+        phone = ''
+        birthday = ''
 
         # --- Получение токена и профиля через code ---
         if code:
@@ -667,11 +670,42 @@ class VKIDAuthView(APIView):
         else:
             return Response({'detail': 'Передайте code или access_token.'}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Попытаемся получить подробную информацию о пользователе через VK user_info, если есть access_token
+        if access_token:
+            try:
+                client_id_hdr = str(getattr(settings, 'VK_APP_ID', '')).strip()
+                headers = {'Authorization': f'Bearer {access_token}'}
+                if client_id_hdr:
+                    headers['Client-Id'] = client_id_hdr
+                    headers['X-VK-APP-ID'] = client_id_hdr
+                ui_resp = requests.get(
+                    'https://id.vk.com/oauth2/user_info',
+                    headers=headers,
+                    params={'client_id': client_id_hdr} if client_id_hdr else None,
+                    timeout=10
+                )
+                ui_data = ui_resp.json() if ui_resp is not None else {}
+                vk_logger.debug(f"VK user_info: {ui_data}")
+                if isinstance(ui_data, dict):
+                    src = ui_data.get('user') or ui_data
+                    first_name = src.get('first_name') or src.get('given_name') or first_name
+                    last_name = src.get('last_name') or src.get('family_name') or last_name
+                    email = src.get('email') or email
+                    photo_url = src.get('avatar') or src.get('picture') or photo_url
+                    phone = src.get('phone') or phone
+                    birthday = src.get('birthday') or src.get('bdate') or birthday
+                    ui_uid = src.get('user_id') or src.get('sub') or None
+                    if ui_uid and not vk_user_id:
+                        vk_user_id = str(ui_uid)
+            except Exception as e:
+                vk_logger.exception(f"Failed to fetch VK user_info: {e}")
+
         # --- Берем данные, пришедшие с фронта ---
         first_name = (request.data.get('first_name') or request.data.get('firstName') or first_name or '').strip()
         last_name = (request.data.get('last_name') or request.data.get('lastName') or last_name or '').strip()
         photo_url = (request.data.get('picture') or request.data.get('photo_url') or photo_url or '').strip()
         email = (request.data.get('email') or email or '').strip()
+        phone = (request.data.get('phone') or phone or '').strip()
         vk_user_id = str(request.data.get('user_id') or vk_user_id)
 
         if not vk_user_id:
@@ -689,6 +723,56 @@ class VKIDAuthView(APIView):
 
         # Логиним пользователя
         login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+
+        # Создаём/обновляем Participant из доступных данных (email, ФИО, телефон, возраст из дня рождения)
+        created_participant = False
+        full_name = (' '.join([x for x in [first_name, last_name] if x]) or '').strip()
+        # Попробуем вычислить возраст из даты рож��ения формата DD.MM.YYYY или ISO
+        age_val = None
+        if birthday:
+            try:
+                try:
+                    bdate = datetime.strptime(birthday, '%d.%m.%Y').date()
+                except ValueError:
+                    bdate = datetime.strptime(birthday, '%Y-%m-%d').date()
+                today = timezone.localdate()
+                age_val = today.year - bdate.year - ((today.month, today.day) < (bdate.month, bdate.day))
+                if age_val <= 0 or age_val > 120:
+                    age_val = None
+            except Exception:
+                age_val = None
+
+        participant = Participant.objects.filter(user=user).first()
+        if participant:
+            changed = []
+            if email and (not participant.email):
+                participant.email = email
+                changed.append('email')
+            if full_name and participant.full_name != full_name:
+                participant.full_name = full_name
+                changed.append('full_name')
+            if phone and (not participant.phone):
+                participant.phone = phone
+                changed.append('phone')
+            if changed:
+                try:
+                    participant.save(update_fields=changed)
+                except Exception as e:
+                    vk_logger.warning(f'Failed to update Participant: {e}')
+        else:
+            # Создадим профиль, если хватает минимальных данных: email и возраст
+            if email and age_val is not None:
+                try:
+                    participant = Participant.objects.create(
+                        user=user,
+                        full_name=full_name or username,
+                        age=age_val,
+                        email=email,
+                        phone=phone or '',
+                    )
+                    created_participant = True
+                except Exception as e:
+                    vk_logger.warning(f'Failed to create Participant automatically: {e}')
 
         data = {
             'new_user': created,

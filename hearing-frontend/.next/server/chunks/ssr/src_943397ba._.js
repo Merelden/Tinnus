@@ -601,11 +601,6 @@ const OAuthBtns = ()=>{
                     console.log('Client-side token:', tokenRes);
                     const dataBaba = await VKID.Auth.userInfo(tokenRes.access_token);
                     console.log(dataBaba);
-                    // Нормализуем данные из userinfo
-                    const firstName = dataBaba?.given_name || dataBaba?.first_name || '';
-                    const lastName = dataBaba?.family_name || dataBaba?.last_name || '';
-                    const picture = dataBaba?.picture || '';
-                    const email = (dataBaba?.email || tokenRes?.email || '').toString();
                     try {
                         await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$api$2f$request$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["NetworkService"].csrf();
                     } catch  {}
@@ -615,10 +610,7 @@ const OAuthBtns = ()=>{
                         refresh_token: tokenRes.refresh_token,
                         user_id: tokenRes.user_id,
                         scope: tokenRes.scope,
-                        email,
-                        first_name: firstName,
-                        last_name: lastName,
-                        picture
+                        email: tokenRes.email || ''
                     });
                     return;
                 }
@@ -646,25 +638,25 @@ const OAuthBtns = ()=>{
                 children: [
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("hr", {}, void 0, false, {
                         fileName: "[project]/src/components/UI/Auth/OAuthBtns.tsx",
-                        lineNumber: 153,
+                        lineNumber: 144,
                         columnNumber: 17
                     }, ("TURBOPACK compile-time value", void 0)),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                         children: "или"
                     }, void 0, false, {
                         fileName: "[project]/src/components/UI/Auth/OAuthBtns.tsx",
-                        lineNumber: 154,
+                        lineNumber: 145,
                         columnNumber: 17
                     }, ("TURBOPACK compile-time value", void 0)),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("hr", {}, void 0, false, {
                         fileName: "[project]/src/components/UI/Auth/OAuthBtns.tsx",
-                        lineNumber: 155,
+                        lineNumber: 146,
                         columnNumber: 17
                     }, ("TURBOPACK compile-time value", void 0))
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/UI/Auth/OAuthBtns.tsx",
-                lineNumber: 152,
+                lineNumber: 143,
                 columnNumber: 13
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(WrapperButtons, {
@@ -674,26 +666,26 @@ const OAuthBtns = ()=>{
                         className: "btnAuth"
                     }, void 0, false, {
                         fileName: "[project]/src/components/UI/Auth/OAuthBtns.tsx",
-                        lineNumber: 158,
+                        lineNumber: 149,
                         columnNumber: 21
                     }, ("TURBOPACK compile-time value", void 0)),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$UI$2f$Auth$2f$TgBtn$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TelegramLoginButton"], {
                         botName: "neurotinnitus_bot"
                     }, void 0, false, {
                         fileName: "[project]/src/components/UI/Auth/OAuthBtns.tsx",
-                        lineNumber: 159,
+                        lineNumber: 150,
                         columnNumber: 17
                     }, ("TURBOPACK compile-time value", void 0))
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/UI/Auth/OAuthBtns.tsx",
-                lineNumber: 157,
+                lineNumber: 148,
                 columnNumber: 13
             }, ("TURBOPACK compile-time value", void 0))
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/UI/Auth/OAuthBtns.tsx",
-        lineNumber: 150,
+        lineNumber: 141,
         columnNumber: 9
     }, ("TURBOPACK compile-time value", void 0));
 };
