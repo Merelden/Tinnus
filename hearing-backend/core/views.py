@@ -569,7 +569,7 @@ class TelegramAuthView(APIView):
 class CompleteProfileView(APIView):
     """
     Создание Participant для уже аутентифицированного пользователя (после OAuth входа).
-    POST JSON: { full_name, age, phone, email? }
+    POST JSON: { first_name, last_name, age, phone, email? }
     Если у пользователя нет email, обязателен email в запросе.
     Возвращает данные Participant и csrftoken.
     """
@@ -578,7 +578,9 @@ class CompleteProfileView(APIView):
     def post(self, request):
         user = request.user
         # Читаем поля для дозаполнения профиля (все — опционально)
-        full_name = (request.data.get('full_name') or '').strip()
+        first_name = (request.data.get('first_name') or '').strip()
+        last_name = (request.data.get('last_name') or '').strip()
+        full_name = (' '.join([x for x in [first_name, last_name] if x]) or '').strip()
         phone = (request.data.get('phone') or '').strip()
         email = (request.data.get('email') or '').strip()
         age = request.data.get('age')
