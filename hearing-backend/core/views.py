@@ -497,11 +497,71 @@ class TelegramAuthView(APIView):
             }
         }
 
+        # Попытаемся создать/обновить Participant, если хватает данных
+        email_in = (request.data.get('email') or '').strip()
+        phone_in = (request.data.get('phone') or '').strip()
+        full_name = (' '.join([x for x in [first_name, last_name] if x]) or '').strip()
+        full_name = (request.data.get('full_name') or full_name).strip()
+        age_in = request.data.get('age')
         try:
-            participant = Participant.objects.get(user=user)
+            age_in = int(age_in)
+            if age_in <= 0 or age_in > 120:
+                age_in = None
+        except (TypeError, ValueError):
+            age_in = None
+
+        # Сохраним email у пользователя, если он пуст
+        if email_in and not user.email:
+            try:
+                user.email = email_in
+                user.save(update_fields=['email'])
+            except Exception:
+                pass
+
+        participant = Participant.objects.filter(user=user).first()
+        if participant:
+            changed = []
+            # Имя/фамилия
+            if full_name and participant.full_name != full_name:
+                participant.full_name = full_name
+                changed.append('full_name')
+            # Телефон (дозаполнение)
+            if phone_in and not participant.phone:
+                participant.phone = phone_in
+                changed.append('phone')
+            # Email (дозаполнение с проверкой уникальности среди Participant)
+            if email_in and email_in != (participant.email or ''):
+                if not Participant.objects.exclude(pk=participant.pk).filter(email=email_in).exists():
+                    participant.email = email_in
+                    changed.append('email')
+                else:
+                    server_logger.warning('Email already used by another participant; skip')
+            # Флаг TG-авторизации
+            if not participant.is_tg_auth:
+                participant.is_tg_auth = True
+                changed.append('is_tg_auth')
+            if changed:
+                try:
+                    participant.save(update_fields=changed)
+                except Exception as e:
+                    server_logger.warning(f'Failed to update Participant after Telegram auth: {e}')
+        else:
+            # Создаём Participant минимально по ФИО, остальное при наличии
+            try:
+                participant = Participant.objects.create(
+                    user=user,
+                    full_name=full_name or (tg_username or f'tg_{tg_id}'),
+                    age=age_in if age_in is not None else None,
+                    email=email_in or None,
+                    phone=phone_in or '',
+                    is_tg_auth=True,
+                )
+            except Exception as e:
+                server_logger.warning(f'Failed to create Participant after Telegram auth: {e}')
+                participant = None
+
+        if participant:
             data['participant'] = ParticipantSerializer(participant).data
-        except Participant.DoesNotExist:
-            pass
 
         return Response(data)
 
@@ -517,57 +577,66 @@ class CompleteProfileView(APIView):
 
     def post(self, request):
         user = request.user
-        if Participant.objects.filter(user=user).exists():
-            return Response({'detail': 'Профиль уже заполнен.'}, status=status.HTTP_400_BAD_REQUEST)
-
+        # Читаем поля для дозаполнения профиля (все — опционально)
         full_name = (request.data.get('full_name') or '').strip()
-        age = request.data.get('age')
         phone = (request.data.get('phone') or '').strip()
-        email = (user.email or '').strip() or (request.data.get('email') or '').strip()
-
-        field_errors = {}
-        if not full_name:
-            field_errors['full_name'] = ['Это поле обязательно.']
+        email = (request.data.get('email') or '').strip()
+        age = request.data.get('age')
         try:
-            age = int(age)
-            if age <= 0 or age > 120:
-                field_errors['age'] = ['Недопустимое значение возраста.']
+            age = int(age) if age is not None and str(age).strip() != '' else None
+            if age is not None and (age <= 0 or age > 120):
+                return Response({'age': ['Недопустимое значение возраста.']}, status=status.HTTP_400_BAD_REQUEST)
         except (TypeError, ValueError):
-            field_errors['age'] = ['Ожидается целое число.']
-        if not phone:
-            field_errors['phone'] = ['Это поле обязательно.']
-        if not email:
-            field_errors['email'] = ['Это поле обязательно.']
-        if field_errors:
-            return Response(field_errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'age': ['Ожидается целое число.']}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Валидация уникальности телефона и email
-        if Participant.objects.filter(phone=phone).exists():
-            return Response({'phone': ['Этот телефон уже занят.']}, status=status.HTTP_400_BAD_REQUEST)
-        if Participant.objects.filter(email=email).exists():
-            return Response({'email': ['Этот email уже занят.']}, status=status.HTTP_400_BAD_REQUEST)
+        participant = Participant.objects.filter(user=user).first()
 
-        # Сохраняем email на пользователе, если пустой
-        if not user.email:
+        # Валидация уникальности телефона и email при передаче
+        if phone:
+            if Participant.objects.exclude(user=user).filter(phone=phone).exists():
+                return Response({'phone': ['Этот телефон уже занят.']}, status=status.HTTP_400_BAD_REQUEST)
+        if email:
+            if Participant.objects.exclude(user=user).filter(email=email).exists():
+                return Response({'email': ['Этот email уже занят.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Обновим email пользователя, если он пуст и мы получили email
+        if email and not user.email:
             try:
                 user.email = email
-                user.username = user.username or email  # username уже занят для tg_/vk_, не меняем если задан
                 user.save(update_fields=['email'])
             except Exception:
-                # Конфликт email на User уровне игнорируем для пользователя OAuth, Participant всё равно создадим
                 pass
 
-        participant = Participant.objects.create(
-            user=user,
-            full_name=full_name,
-            age=age,
-            phone=phone,
-            email=email,
-        )
+        # Если участник существует — обновим поля, иначе создадим минимальный профиль
+        if participant:
+            changed = []
+            if full_name and participant.full_name != full_name:
+                participant.full_name = full_name
+                changed.append('full_name')
+            if phone and participant.phone != phone:
+                participant.phone = phone
+                changed.append('phone')
+            if email and email != (participant.email or ''):
+                participant.email = email
+                changed.append('email')
+            if age is not None and participant.age != age:
+                participant.age = age
+                changed.append('age')
+            if changed:
+                participant.save(update_fields=changed)
+        else:
+            participant = Participant.objects.create(
+                user=user,
+                full_name=full_name or (user.get_full_name() or user.username),
+                age=age,
+                phone=phone or '',
+                email=email or None,
+            )
+
         return Response({
             'participant': ParticipantSerializer(participant).data,
             'csrftoken': get_token(request)
-        }, status=status.HTTP_201_CREATED)
+        }, status=status.HTTP_200_OK)
 
 
 class VKIDAuthView(APIView):
@@ -670,7 +739,6 @@ class VKIDAuthView(APIView):
         else:
             return Response({'detail': 'Передайте code или access_token.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Попытаемся получить подробную информацию о пользователе через VK user_info, если есть access_token
         if access_token:
             try:
                 client_id_hdr = str(getattr(settings, 'VK_APP_ID', '')).strip()
@@ -700,7 +768,6 @@ class VKIDAuthView(APIView):
             except Exception as e:
                 vk_logger.exception(f"Failed to fetch VK user_info: {e}")
 
-        # --- Берем данные, пришедшие с фронта ---
         first_name = (request.data.get('first_name') or request.data.get('firstName') or first_name or '').strip()
         last_name = (request.data.get('last_name') or request.data.get('lastName') or last_name or '').strip()
         photo_url = (request.data.get('picture') or request.data.get('photo_url') or photo_url or '').strip()
@@ -711,7 +778,6 @@ class VKIDAuthView(APIView):
         if not vk_user_id:
             return Response({'detail': 'VK не вернул user_id.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # --- Создание или обновление пользователя ---
         username = f"vk_{vk_user_id}"
         user, created = User.objects.get_or_create(username=username)
         user.first_name = first_name or user.first_name
@@ -721,13 +787,10 @@ class VKIDAuthView(APIView):
             user.set_unusable_password()
         user.save(update_fields=['first_name', 'last_name', 'email'])
 
-        # Логиним пользователя
         login(request, user, backend='django.contrib.auth.backends.ModelBackend')
 
-        # Создаём/обновляем Participant из доступных данных (email, ФИО, телефон, возраст из дня рождения)
         created_participant = False
         full_name = (' '.join([x for x in [first_name, last_name] if x]) or '').strip()
-        # Попробуем вычислить возраст из даты рож��ения формата DD.MM.YYYY или ISO
         age_val = None
         if birthday:
             try:
@@ -745,34 +808,44 @@ class VKIDAuthView(APIView):
         participant = Participant.objects.filter(user=user).first()
         if participant:
             changed = []
-            if email and (not participant.email):
-                participant.email = email
-                changed.append('email')
+            # Имя
             if full_name and participant.full_name != full_name:
                 participant.full_name = full_name
                 changed.append('full_name')
-            if phone and (not participant.phone):
+            # Телефон (если пуст)
+            if phone and not participant.phone:
                 participant.phone = phone
                 changed.append('phone')
+            # Email (если отличается и не занят другим участником)
+            if email and email != (participant.email or ''):
+                if not Participant.objects.exclude(pk=participant.pk).filter(email=email).exists():
+                    participant.email = email
+                    changed.append('email')
+                else:
+                    vk_logger.warning('Email already used by another participant; skip')
+            # Флаг VK-авторизации
+            if not getattr(participant, 'is_vk_auth', False):
+                participant.is_vk_auth = True
+                changed.append('is_vk_auth')
             if changed:
                 try:
                     participant.save(update_fields=changed)
                 except Exception as e:
                     vk_logger.warning(f'Failed to update Participant: {e}')
         else:
-            # Создадим профиль, если хватает минимальных данных: email и возраст
-            if email and age_val is not None:
-                try:
-                    participant = Participant.objects.create(
-                        user=user,
-                        full_name=full_name or username,
-                        age=age_val,
-                        email=email,
-                        phone=phone or '',
-                    )
-                    created_participant = True
-                except Exception as e:
-                    vk_logger.warning(f'Failed to create Participant automatically: {e}')
+            # Создаём профиль минимально: ФИО, остальное при наличии
+            try:
+                participant = Participant.objects.create(
+                    user=user,
+                    full_name=full_name or username,
+                    age=age_val if age_val is not None else None,
+                    email=email or None,
+                    phone=phone or '',
+                    is_vk_auth=True,
+                )
+                created_participant = True
+            except Exception as e:
+                vk_logger.warning(f'Failed to create Participant automatically: {e}')
 
         data = {
             'new_user': created,
@@ -785,7 +858,6 @@ class VKIDAuthView(APIView):
             }
         }
 
-        # Добавляем participant, если есть
         try:
             participant = Participant.objects.get(user=user)
             data['participant'] = ParticipantSerializer(participant).data

@@ -6,8 +6,8 @@ import random
 class Participant(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     full_name = models.CharField(max_length=255)
-    age = models.PositiveIntegerField()
-    email = models.EmailField(unique=True)
+    age = models.PositiveIntegerField(null=True, blank=True)
+    email = models.EmailField(unique=True, null=True, blank=True)
     phone = models.CharField(max_length=15, blank=True)
     study_group = models.IntegerField(choices=[(15, '15 days'), (30, '30 days')])
     created_at = models.DateTimeField(auto_now_add=True)
@@ -18,6 +18,9 @@ class Participant(models.Model):
     max_visit_streak = models.PositiveIntegerField(default=0)
     # User feedback (latest submitted text on allowed days)
     feedback = models.TextField(blank=True, null=True)
+    # OAuth flags
+    is_vk_auth = models.BooleanField(default=False)
+    is_tg_auth = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if not self.pk:
