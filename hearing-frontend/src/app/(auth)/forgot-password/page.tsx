@@ -13,7 +13,6 @@ import {isTestDay} from "@/store/streakStore";
 
 export default function AuthPage() {
     const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
     const [errors, setErrors] = useState<{ [key: string]: string } | null>(null);
     const router = useRouter();
 
@@ -30,27 +29,26 @@ export default function AuthPage() {
         fetchAuth()
     }, []);
 
-    //Авторизируем
+    // Запрос кода
     const auth = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setErrors(null);
         try {
             await NetworkService.csrf();
-            const res = await NetworkService.login({
+            const res = await NetworkService.requestCode({
                 email: email,
-                password: password
             });
+            console.log(res);
             if (res.status === 400) {
                 const parsedErrors = res.data;
                 setErrors({
                     email: parsedErrors.email ? parsedErrors.email[0] : '',
-                    password: parsedErrors.password ? parsedErrors.password[0] : '',
                     detail: parsedErrors.detail ? parsedErrors.detail : ''
                 });
                 console.log(parsedErrors);
             }
             if (res.status === 200) {
-                router.push("/tests");
+                router.push('/forgot-password/submit');
             }
         } catch (err) {
             console.error(err);
@@ -63,11 +61,7 @@ export default function AuthPage() {
         <BackgroundPage>
             <ContentBlock>
                 <WindowBlock>
-                    <h2>Вход в приложение</h2>
-                    <p className={'description-mini'}>
-                        Введите вашу почту и пароль, чтобы продолжить.<br/>
-                        Если у вас нет аккаунта, <Link href={'/register'}>зарегистрируйтесь</Link>.
-                    </p>
+                    <h2>Введите почту</h2>
 
                     <AuthForm onSubmit={auth}>
                         <InputAuth
@@ -78,22 +72,9 @@ export default function AuthPage() {
                             onChange={setEmail}
                             error={errors?.email}
                         />
-                        <InputAuth
-                            image={'lock'}
-                            label={'Пароль'}
-                            value={password}
-                            type={'password'}
-                            onChange={setPassword}
-                            error={errors?.password}
-                        />
-                        <ForgotPassword href='/'>
-                            Забыли пароль?
-                        </ForgotPassword>
-            
-                        <button type={"submit"}>Войти</button>
-                    </AuthForm>
 
-                    <OAuthBtns />
+                        <button type={"submit"}>Получить код</button>
+                    </AuthForm>
 
                 </WindowBlock>
                 <OtherErrors $message={errors?.detail}>

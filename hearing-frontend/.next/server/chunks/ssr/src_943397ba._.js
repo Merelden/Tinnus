@@ -127,6 +127,7 @@ __turbopack_context__.s({
     "AuthForm": ()=>AuthForm,
     "BackgroundPage": ()=>BackgroundPage,
     "ContentBlock": ()=>ContentBlock,
+    "ForgotPassword": ()=>ForgotPassword,
     "OtherErrors": ()=>OtherErrors
 });
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$styled$2d$components$2f$dist$2f$styled$2d$components$2e$esm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/styled-components/dist/styled-components.esm.js [app-ssr] (ecmascript)");
@@ -165,11 +166,11 @@ const AuthForm = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f
     align-items: center;
     flex-direction: column;
     gap: 14px;
-    margin: 24px 0;
+    margin: 24px 0 12px;
     z-index: 20;
     width: 100%;
     button{
-        margin-top: 28px;
+        margin-top: 14px;
         background-color: ${__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$styles$2f$colors$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["primaryColor"]};
         font-size: 24px;
         font-family: var(--font-manrope), serif;
@@ -229,6 +230,17 @@ const OtherErrors = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules
     @media (max-width: 320px) {
         padding: 4%;
     }
+`;
+const ForgotPassword = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$styled$2d$components$2f$dist$2f$styled$2d$components$2e$esm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].a.withConfig({
+    displayName: "page.styled__ForgotPassword",
+    componentId: "sc-9b415218-4"
+})`
+    display: flex;
+    justify-content: end;
+    align-items: center;
+    width: 100%;
+    font-family: var(--font-manrope), serif;
+    color: ${__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$styles$2f$colors$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["primaryColor"]};
 `;
 }),
 "[project]/src/components/UI/Auth/InputAuth.tsx [app-ssr] (ecmascript)": ((__turbopack_context__) => {
@@ -795,25 +807,40 @@ function AuthPage() {
                                     lineNumber: 73,
                                     columnNumber: 25
                                 }, this),
-                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$UI$2f$Auth$2f$InputAuth$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
-                                    image: 'lock',
-                                    label: 'Пароль',
-                                    value: password,
-                                    type: 'password',
-                                    onChange: setPassword,
-                                    error: errors?.password
-                                }, void 0, false, {
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    children: [
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f28$auth$292f$page$2e$styled$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ForgotPassword"], {
+                                            href: "/forgot-password",
+                                            children: "Забыли пароль?"
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/app/(auth)/login/page.tsx",
+                                            lineNumber: 82,
+                                            columnNumber: 29
+                                        }, this),
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$UI$2f$Auth$2f$InputAuth$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
+                                            image: 'lock',
+                                            label: 'Пароль',
+                                            value: password,
+                                            type: 'password',
+                                            onChange: setPassword,
+                                            error: errors?.password
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/app/(auth)/login/page.tsx",
+                                            lineNumber: 85,
+                                            columnNumber: 29
+                                        }, this)
+                                    ]
+                                }, void 0, true, {
                                     fileName: "[project]/src/app/(auth)/login/page.tsx",
                                     lineNumber: 81,
                                     columnNumber: 25
                                 }, this),
-                                "Забыли пароль?",
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                                     type: "submit",
                                     children: "Войти"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/(auth)/login/page.tsx",
-                                    lineNumber: 90,
+                                    lineNumber: 95,
                                     columnNumber: 25
                                 }, this)
                             ]
@@ -824,7 +851,7 @@ function AuthPage() {
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$UI$2f$Auth$2f$OAuthBtns$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                             fileName: "[project]/src/app/(auth)/login/page.tsx",
-                            lineNumber: 93,
+                            lineNumber: 98,
                             columnNumber: 21
                         }, this)
                     ]
@@ -838,7 +865,7 @@ function AuthPage() {
                     children: errors?.detail
                 }, void 0, false, {
                     fileName: "[project]/src/app/(auth)/login/page.tsx",
-                    lineNumber: 96,
+                    lineNumber: 101,
                     columnNumber: 17
                 }, this)
             ]

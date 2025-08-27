@@ -28,11 +28,11 @@ export const AuthForm = styled.form`
     align-items: center;
     flex-direction: column;
     gap: 14px;
-    margin: 24px 0;
+    margin: 24px 0 12px;
     z-index: 20;
     width: 100%;
     button{
-        margin-top: 28px;
+        margin-top: 14px;
         background-color: ${primaryColor};
         font-size: 24px;
         font-family: var(--font-manrope), serif;
@@ -90,7 +90,9 @@ export const OtherErrors = styled.div<{$message: string | undefined}>`
 
 export const ForgotPassword = styled.a`
     display: flex;
-    justify-content: start;
+    justify-content: end;
     align-items: center;
     width: 100%;
+    font-family: var(--font-manrope), serif;
+    color: ${primaryColor};
 `

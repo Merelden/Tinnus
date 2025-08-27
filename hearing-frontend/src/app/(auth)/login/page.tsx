@@ -1,7 +1,7 @@
 'use client'
 import Link from "next/link";
 import WindowBlock from "@/components/UI/WindowBlock";
-import {AuthForm, BackgroundPage, ContentBlock, OtherErrors} from "@/app/(auth)/page.styled";
+import {AuthForm, BackgroundPage, ContentBlock, ForgotPassword, OtherErrors} from "@/app/(auth)/page.styled";
 import InputAuth from "@/components/UI/Auth/InputAuth";
 import {FormEvent, useEffect, useState} from "react";
 import OAuthBtns from "@/components/UI/Auth/OAuthBtns";
@@ -78,17 +78,19 @@ export default function AuthPage() {
                             onChange={setEmail}
                             error={errors?.email}
                         />
-                        <InputAuth
-                            image={'lock'}
-                            label={'Пароль'}
-                            value={password}
-                            type={'password'}
-                            onChange={setPassword}
-                            error={errors?.password}
-                        />
-                        <ForgotPassword href='/'>
-                            Забыли пароль?
-                        </ForgotPassword>
+                        <div>
+                            <ForgotPassword href='/forgot-password'>
+                                Забыли пароль?
+                            </ForgotPassword>
+                            <InputAuth
+                                image={'lock'}
+                                label={'Пароль'}
+                                value={password}
+                                type={'password'}
+                                onChange={setPassword}
+                                error={errors?.password}
+                            />
+                        </div>
             
                         <button type={"submit"}>Войти</button>
                     </AuthForm>

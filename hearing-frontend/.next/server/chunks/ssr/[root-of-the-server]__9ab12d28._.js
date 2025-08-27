@@ -158,7 +158,7 @@ function getApiBaseUrl() {
     const explicit = ("TURBOPACK compile-time falsy", 0) ? "TURBOPACK unreachable" : process.env.NEXT_PUBLIC_API_BASE_URL;
     if (explicit) return explicit;
     const host = ("TURBOPACK compile-time falsy", 0) ? "TURBOPACK unreachable" : '127.0.0.1:8000';
-    return `https://${host}/api`;
+    return `http://127.0.0.1:8000/api`;
 }
 const axiosInstance = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].create({
     baseURL: getApiBaseUrl(),
@@ -244,6 +244,14 @@ class NetworkService {
     static async completeProfile(data) {
         try {
             return await axiosInstance.post('/auth/complete-profile/', data);
+        } catch (error) {
+            return error.response;
+        }
+    }
+    // Восстановление пароля
+    static async requestCode(data) {
+        try {
+            return await axiosInstance.post('/auth/password-reset/request/', data);
         } catch (error) {
             return error.response;
         }

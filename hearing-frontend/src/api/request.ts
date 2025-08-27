@@ -107,6 +107,14 @@ export class NetworkService {
             return error.response;
         }
     }
+    // Восстановление пароля
+    static async requestCode(data: object): Promise<AxiosResponse> {
+        try {
+            return await axiosInstance.post('/auth/password-reset/request/', data);
+        } catch (error: any) {
+            return error.response;
+        }
+    }
  
     static async streak(): Promise<AxiosResponse> {
         try {
