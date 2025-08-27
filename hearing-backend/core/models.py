@@ -141,3 +141,35 @@ class QuestionOption(models.Model):
 
     def __str__(self):
         return self.label
+
+
+class DailyEmailLog(models.Model):
+    participant = models.ForeignKey(Participant, on_delete=models.CASCADE, related_name='email_logs')
+    day = models.PositiveIntegerField()
+    date = models.DateField()
+    status = models.CharField(max_length=20, default='sent')  # sent | failed | skipped
+    error = models.TextField(blank=True, null=True)
+
+    class Meta:
+        unique_together = ['participant', 'date']
+        ordering = ['-date', '-id']
+
+    def __str__(self):
+        return f"{self.participant.full_name} [{self.date}] day {self.day} {self.status}"
+
+
+class DailyEmailRun(models.Model):
+    date = models.DateField(unique=True)
+    started_at = models.DateTimeField(auto_now_add=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+    sent = models.PositiveIntegerField(default=0)
+    skipped = models.PositiveIntegerField(default=0)
+    failed = models.PositiveIntegerField(default=0)
+    status = models.CharField(max_length=20, default='running')  # running | finished | failed
+    error = models.TextField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['-date', '-id']
+
+    def __str__(self):
+        return f"Run {self.date} [{self.status}] sent={self.sent} skipped={self.skipped} failed={self.failed}"

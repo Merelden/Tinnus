@@ -90,7 +90,7 @@ const OAuthBtns = () => {
             skin: 'secondary',
             styles: { borderRadius: 10, height: 40, width: 200 },
         })
-        .on(VKID.WidgetEvents.ERROR, (error) => console.error('VK Ошибка входа', error))
+        .on(VKID.WidgetEvents.ERROR, (error: Error) => console.error('VK Ошибка входа', error))
         .on(VKID.OneTapInternalEvents.LOGIN_SUCCESS, async (payload: any) => {
             console.log('VK payload:', payload);
 
@@ -130,8 +130,8 @@ const OAuthBtns = () => {
                     redirect_uri: REDIRECT_URL,
                 });
                 console.log('Server-side auth result:', res);
-            } catch (err) {
-                console.error('Server-side VK auth error:', err.response?.data || err);
+            } catch (error: any) {
+                console.error('Server-side VK auth error:', error.response?.data || error);
             }
         });
     }, [isSdkLoaded]);

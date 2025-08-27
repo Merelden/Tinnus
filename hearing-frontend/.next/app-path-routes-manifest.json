@@ -1,12 +1,13 @@
 {
   "/_not-found/page": "/_not-found",
-  "/neuroexercise/page": "/neuroexercise",
   "/(auth)/login/page": "/login",
-  "/(auth)/register/page": "/register",
+  "/(auth)/oAuth.tsx/page": "/oAuth.tsx",
   "/complete/page": "/complete",
+  "/(auth)/register/page": "/register",
   "/instruction/page": "/instruction",
+  "/neuroexercise/page": "/neuroexercise",
   "/page": "/",
   "/start/page": "/start",
-  "/video/page": "/video",
-  "/tests/page": "/tests"
+  "/tests/page": "/tests",
+  "/video/page": "/video"
 }

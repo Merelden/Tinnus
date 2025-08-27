@@ -1,12 +1,17 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from django.conf import settings
 from django.middleware.csrf import get_token
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.template import TemplateDoesNotExist
 from .models import Participant, Question, Test, CalmingVideoSegment
 from .serializers import ParticipantSerializer, QuestionSerializer, TestSerializer
 
@@ -24,6 +29,7 @@ from datetime import datetime, date
 
 vk_logger = logging.getLogger('vk')
 server_logger = logging.getLogger(__name__)
+email_logger = logging.getLogger('email_test')
 
 
 class RegisterView(generics.CreateAPIView):
@@ -409,6 +415,85 @@ class FeedbackSubmitView(APIView):
             'study_group': participant.study_group,
             'feedback': str(text),
         })
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class TestEmailSendView(APIView):
+    """
+    Тестовая отправка письма на указанный email.
+    POST JSON: { email: string }
+    Доступно без авторизации. Только для тестов.
+    """
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        to_email = (request.data.get('email') or '').strip()
+        if not to_email:
+            email_logger.warning('emails.test-send: missing email in request')
+            return Response({'email': ['Это поле обязательно.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        # day
+        raw_day = request.data.get('day')
+        try:
+            day = int(raw_day) if raw_day is not None and str(raw_day).strip() != '' else 1
+            if day <= 0 or day > 365:
+                return Response({'day': ['Недопустимое значение.']}, status=status.HTTP_400_BAD_REQUEST)
+        except (TypeError, ValueError):
+            return Response({'day': ['Ожидается целое число.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        # study_group
+        raw_group = request.data.get('study_group') or request.data.get('group')
+        try:
+            study_group = int(raw_group) if raw_group is not None and str(raw_group).strip() != '' else 30
+            if study_group not in (15, 30):
+                return Response({'study_group': ['Ожидается 15 или 30.']}, status=status.HTTP_400_BAD_REQUEST)
+        except (TypeError, ValueError):
+            return Response({'study_group': ['Ожидается 15 или 30.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        full_name = (request.data.get('full_name') or request.data.get('name') or 'Пользователь').strip()
+        subject = f"NeuroTinnitus — тестовая рассылка (день {day} из {study_group})"
+        context = {
+            'participant': {'full_name': full_name},
+            'day': day,
+            'study_group': study_group,
+            'site_url': getattr(settings, 'SITE_URL', ''),
+        }
+
+        # Render bodies with safe fallback
+        try:
+            text_body = render_to_string('emails/daily.txt', context)
+        except TemplateDoesNotExist:
+            text_body = (
+                f"Здравствуйте, {full_name}!\n\n"
+                f"Сегодня день {day} из {study_group} вашей программы.\n"
+                f"Перейдите на сайт: {context['site_url']}\n\n"
+                f"Хорошего дня!"
+            )
+        try:
+            html_body = render_to_string('emails/daily.html', context)
+        except TemplateDoesNotExist:
+            html_body = (
+                f"<p>Здравствуйте, {full_name}!</p>"
+                f"<p>Сегодня день <strong>{day}</strong> из <strong>{study_group}</strong> вашей программы.</p>"
+                f"<p><a href=\"{context['site_url']}\">Перейти на сайт</a></p>"
+                f"<p>Хорошего дня!</p>"
+            )
+
+        try:
+            msg = EmailMultiAlternatives(
+                subject=subject,
+                body=text_body,
+                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
+                to=[to_email],
+            )
+            msg.attach_alternative(html_body, 'text/html')
+            msg.send(fail_silently=False)
+            email_logger.info(f'emails.test-send: sent to={to_email} day={day} group={study_group}')
+            return Response({'sent': True, 'to': to_email, 'day': day, 'study_group': study_group})
+        except Exception as e:
+            email_logger.exception(f'emails.test-send: error to={to_email}: {e}')
+            return Response({'sent': False, 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class TelegramAuthView(APIView):

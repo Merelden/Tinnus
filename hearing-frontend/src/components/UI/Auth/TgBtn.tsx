@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import styled from "styled-components";
 import Image from "next/image";
 import { lightGrayColor } from "@/styles/colors";
-import { TelegramIcon } from '../TelegramIcon';
 import { NetworkService } from '@/api/request';
 
 export type TGUser = {

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin
-from .models import Participant, Progress, Test, Exercise, Question, QuestionOption, CalmingVideoSegment
+from .models import Participant, Progress, Test, Exercise, Question, QuestionOption, CalmingVideoSegment, DailyEmailLog
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.utils.safestring import mark_safe
@@ -27,6 +27,13 @@ class ParticipantAdmin(ModelAdmin):
         if db_field.name == "user":
             kwargs["queryset"] = User.objects.filter(is_superuser=False)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+
+@admin.register(DailyEmailLog)
+class DailyEmailLogAdmin(ModelAdmin):
+    list_display = ('participant', 'day', 'date', 'status')
+    list_filter = ('status', 'date')
+    search_fields = ('participant__full_name', 'participant__email')
 
 @admin.register(Progress)
 class ProgressAdmin(ModelAdmin):

@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import RegisterView, LoginView, TelegramAuthView, VKIDAuthView, CompleteProfileView, QuestionsView, StreakView, CsrfView, SubmitTestView, MyTestsSummaryView, MyTestByDayView, AuthStatusView, CalmingVideoView, FeedbackSubmitView
+from .views import RegisterView, LoginView, TelegramAuthView, VKIDAuthView, CompleteProfileView, QuestionsView, StreakView, CsrfView, SubmitTestView, MyTestsSummaryView, MyTestByDayView, AuthStatusView, CalmingVideoView, FeedbackSubmitView, TestEmailSendView
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
@@ -38,4 +38,7 @@ urlpatterns = [
 
     # Feedback endpoint
     path('feedback/submit/', FeedbackSubmitView.as_view(), name='feedback_submit'),
+
+    # Test email send endpoint (authorized only)
+    path('emails/test-send/', TestEmailSendView.as_view(), name='emails_test_send'),
 ]

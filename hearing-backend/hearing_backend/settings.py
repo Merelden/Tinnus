@@ -53,7 +53,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'core',
-    'corsheaders'
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -169,6 +169,17 @@ MEDIA_ROOT = "/var/www/Tinnus/hearing-backend/videos"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Email configuration (static; fill with your SMTP settings)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.timeweb.ru'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'info@neurotinnitus.ru'
+EMAIL_HOST_PASSWORD = 'UyMTj._a;0~%:='
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+DEFAULT_FROM_EMAIL = 'info@neurotinnitus.ru'
+SITE_URL = os.environ.get('SITE_URL', 'https://neurotinnitus.ru')
+
 # Django REST Framework configuration: use SessionAuthentication + CSRF
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -221,6 +232,14 @@ LOGGING = {
             'backupCount': 5,
             'formatter': 'verbose',
         },
+        'email_test_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': str(BASE_DIR / 'email_test.log'),
+            'maxBytes': 1024 * 1024 * 5,  # 5 MB
+            'backupCount': 3,
+            'formatter': 'verbose',
+        },
     },
     'loggers': {
         'vk': {
@@ -231,6 +250,11 @@ LOGGING = {
         'django.request': {
             'handlers': ['server_file'],
             'level': 'WARNING',
+            'propagate': False,
+        },
+        'email_test': {
+            'handlers': ['email_test_file'],
+            'level': 'INFO',
             'propagate': False,
         },
     },
