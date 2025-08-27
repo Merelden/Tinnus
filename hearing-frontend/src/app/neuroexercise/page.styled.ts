@@ -8,7 +8,7 @@ export const TitleNeuroexercise = styled.div`
     align-items: center;
     gap: 10px;
     width: 100%;
-    margin-bottom: 32px;
+    margin-bottom: 24px;
     p{
         width: 744px;
         margin-top: 8px;
@@ -66,10 +66,16 @@ export const InfoWindow = styled.p<{$primary?: boolean}>`
     white-space: nowrap;
 `
 export const VideoWrapper = styled.div`
-    width: 940px;
-    height: 490px;
-    border-radius: 24px;
-    overflow: hidden;
+    width: 900px;
+    height: 480px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    video{
+        border-radius: 24px;
+    }
+
     @media (max-width: 1000px) {
         width: 100%;
         height: 420px;

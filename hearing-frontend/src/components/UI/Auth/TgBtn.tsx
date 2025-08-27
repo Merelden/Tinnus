@@ -19,17 +19,6 @@ type Props = {
   onAuthCallback?: (user: TGUser) => void;
 };
 
-const Button = styled.button`
-    width: 160px;
-    height: 44px;
-    border-radius: 6px;
-    background-color: ${lightGrayColor};
-    
-    img {
-        user-drag: none;
-        -webkit-user-drag: none;
-    }
-`;
 
 export const TelegramLoginButton = (props: Props) => {
   const _containerRef = useRef<HTMLDivElement | null>(null);

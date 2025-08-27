@@ -92,9 +92,17 @@ export class NetworkService {
             return error.response;
         }
     }
+    //Авторизация через соц сети
     static async authVk(data: Object): Promise<AxiosResponse> {
         try {
             return await axiosInstance.post('/auth/vk/', data);
+        } catch (error: any) {
+            return error.response;
+        }
+    }
+    static async completeProfile(data: object): Promise<AxiosResponse> {
+        try {
+            return await axiosInstance.post('/auth/complete-profile/', data);
         } catch (error: any) {
             return error.response;
         }

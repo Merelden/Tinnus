@@ -9,10 +9,12 @@ import {
 } from "@/app/instruction/page.styled";
 import SubmitButton from "@/components/UI/SubmitButton";
 import {useRouter} from "next/navigation";
+import {studyGroup} from "@/store/streakStore";
 
 
 export default function InstructionPage() {
     const router = useRouter()
+    const totalDays = studyGroup();
 
     const handleNext = () =>{
         router.push('/video')
@@ -24,7 +26,7 @@ export default function InstructionPage() {
                 <WrapperInstruction>
                 <TitleInstruction>
                     <h2>Мультсенсорная шумометрия</h2>
-                    <p>В рамках исследования приглашаем вас в новое тестирование — аудиовизуальную шумометрию. Вы будете проходить её ежедневно следующие 15 дней.</p>
+                    <p>В рамках исследования приглашаем вас в новое тестирование — аудиовизуальную шумометрию. Вы будете проходить её ежедневно следующие {totalDays} дней.</p>
                 </TitleInstruction>
                 <CardsInstruction>
                     <CardInstruction>

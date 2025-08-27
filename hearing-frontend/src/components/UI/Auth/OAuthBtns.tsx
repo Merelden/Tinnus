@@ -107,6 +107,8 @@ const OAuthBtns = () => {
                     console.log('Client-side token:', tokenRes);
                     const dataBaba = await VKID.Auth.userInfo(tokenRes.access_token)
                     console.log(dataBaba)
+                    const dataBaba4 = await NetworkService.streak;
+                    console.log(dataBaba4)
                     try { await NetworkService.csrf(); } catch {}
                     await NetworkService.authVk({
                         access_token: tokenRes.access_token,

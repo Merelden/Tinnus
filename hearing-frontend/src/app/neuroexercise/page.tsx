@@ -27,6 +27,7 @@ export default function NeuroexercisePage() {
 
         const fetchVideo = async () => {
             const res = await NetworkService.calming({ timestamp: ts });
+            console.log(res)
             if (res.status === 200) {
                 setVideoUrl(`https://neurotinnitus.ru/media/${res.data.path}`);
             } else {
@@ -56,7 +57,7 @@ export default function NeuroexercisePage() {
                     </div>
                 </TitleNeuroexercise>
                 <VideoWrapper>
-                    <video width='100%' controls>
+                    <video height='100%' controls autoPlay muted>
                         <source src={videoUrl} type="video/mp4" />
                     </video>
                 </VideoWrapper>

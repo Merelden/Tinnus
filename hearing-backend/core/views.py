@@ -318,7 +318,7 @@ class CalmingVideoView(APIView):
             except Exception:
                 pass
         # Фолбэк: сконструировать путь в соответствии с договоренностью
-        return {'path': f"/videos/{phase}/{segment}.mp4"}
+        return {'path': f"{phase}/{segment}.mp4"}
 
     def get(self, request):
         # Поддержка прежнего API через query params
@@ -502,6 +502,8 @@ class TelegramAuthView(APIView):
     Ожидает POST с полями Telegram (id, first_name, last_name, username, photo_url, auth_date, hash).
     Проверяет подпись, создаёт/находит пользователя tg_<id>, устанавливает сессию и возвращает participant (если есть).
     """
+    permission_classes = [AllowAny]
+    authentication_classes = []
 
     def post(self, request):
         payload = request.data or {}
@@ -632,18 +634,28 @@ class TelegramAuthView(APIView):
                     server_logger.warning(f'Failed to update Participant after Telegram auth: {e}')
         else:
             # Создаём Participant минимально по ФИО, остальное при наличии
+            create_kwargs = {
+                'user': user,
+                'full_name': full_name or (tg_username or f'tg_{tg_id}'),
+                'age': age_in if age_in is not None else None,
+                'phone': phone_in or '',
+                'is_tg_auth': True,
+            }
+            # Email: устанавливаем только если он не занят другим участником
+            if email_in and not Participant.objects.filter(email=email_in).exists():
+                create_kwargs['email'] = email_in
+            else:
+                create_kwargs['email'] = None
             try:
-                participant = Participant.objects.create(
-                    user=user,
-                    full_name=full_name or (tg_username or f'tg_{tg_id}'),
-                    age=age_in if age_in is not None else None,
-                    email=email_in or None,
-                    phone=phone_in or '',
-                    is_tg_auth=True,
-                )
+                participant = Participant.objects.create(**create_kwargs)
             except Exception as e:
-                server_logger.warning(f'Failed to create Participant after Telegram auth: {e}')
-                participant = None
+                # Возможна гонка/ошибка уникальности email — повторим без email
+                try:
+                    create_kwargs['email'] = None
+                    participant = Participant.objects.create(**create_kwargs)
+                except Exception as e2:
+                    server_logger.warning(f'Failed to create Participant after Telegram auth: {e2}')
+                    participant = None
 
         if participant:
             data['participant'] = ParticipantSerializer(participant).data
