@@ -173,3 +173,22 @@ class DailyEmailRun(models.Model):
 
     def __str__(self):
         return f"Run {self.date} [{self.status}] sent={self.sent} skipped={self.skipped} failed={self.failed}"
+
+
+class PasswordResetCode(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='password_reset_codes')
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used = models.BooleanField(default=False)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['code']),
+            models.Index(fields=['expires_at']),
+            models.Index(fields=['used']),
+        ]
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} [{self.code}] used={self.used}"

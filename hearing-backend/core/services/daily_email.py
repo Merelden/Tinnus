@@ -66,7 +66,7 @@ def perform_daily_emails(target_date: date, user=None, dry_run: bool = False):
             html_body = render_to_string('emails/daily.html', context)
         except TemplateDoesNotExist:
             html_body = (
-                f"<p>З��равствуйте, {participant.full_name}!</p>"
+                f"<p>Здравствуйте, {participant.full_name}!</p>"
                 f"<p>Сегодня день <strong>{day}</strong> из <strong>{participant.study_group}</strong> вашей программы.</p>"
                 f"<p><a href=\"{context['site_url']}\">Перейти на сайт</a></p>"
                 f"<p>Хорошего дня!</p>"

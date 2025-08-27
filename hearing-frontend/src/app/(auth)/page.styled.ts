@@ -87,3 +87,10 @@ export const OtherErrors = styled.div<{$message: string | undefined}>`
         padding: 4%;
     }
 `
+
+export const ForgotPassword = styled.a`
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    width: 100%;
+`

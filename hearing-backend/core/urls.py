@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import RegisterView, LoginView, TelegramAuthView, VKIDAuthView, CompleteProfileView, QuestionsView, StreakView, CsrfView, SubmitTestView, MyTestsSummaryView, MyTestByDayView, AuthStatusView, CalmingVideoView, FeedbackSubmitView, TestEmailSendView
+from .views import RegisterView, LoginView, TelegramAuthView, VKIDAuthView, CompleteProfileView, QuestionsView, StreakView, CsrfView, SubmitTestView, MyTestsSummaryView, MyTestByDayView, AuthStatusView, CalmingVideoView, FeedbackSubmitView, TestEmailSendView, PasswordResetRequestView, PasswordResetConfirmView
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
@@ -41,4 +41,8 @@ urlpatterns = [
 
     # Test email send endpoint (authorized only)
     path('emails/test-send/', TestEmailSendView.as_view(), name='emails_test_send'),
+
+    # Password reset endpoints
+    path('auth/password-reset/request/', PasswordResetRequestView.as_view(), name='password_reset_request'),
+    path('auth/password-reset/confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
 ]

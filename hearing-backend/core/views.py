@@ -12,7 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.template import TemplateDoesNotExist
-from .models import Participant, Question, Test, CalmingVideoSegment
+from .models import Participant, Question, Test, CalmingVideoSegment, PasswordResetCode
 from .serializers import ParticipantSerializer, QuestionSerializer, TestSerializer
 
 import hmac
@@ -21,11 +21,12 @@ import time
 import re
 import json
 import base64
+import random
 from collections import defaultdict
 import requests
 from django.db.models import Q
 import logging
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 vk_logger = logging.getLogger('vk')
 server_logger = logging.getLogger(__name__)
@@ -494,6 +495,130 @@ class TestEmailSendView(APIView):
         except Exception as e:
             email_logger.exception(f'emails.test-send: error to={to_email}: {e}')
             return Response({'sent': False, 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class PasswordResetRequestView(APIView):
+    """
+    Запрос на отправку кода восстановления пароля на email.
+    POST JSON: { email }
+    Ответ всегда 200, чтобы не раскрывать наличие аккаунта.
+    """
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        email = (request.data.get('email') or '').strip()
+        if not email:
+            return Response({'email': ['Это поле обязательно.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Найдём пользователя по User.email/username или Participant.email
+        user = User.objects.filter(Q(email=email) | Q(username=email)).first()
+        if not user:
+            p = Participant.objects.filter(email=email).select_related('user').first()
+            user = p.user if p else None
+
+        # Не раскрываем, существует ли аккаунт
+        if not user:
+            return Response({'sent': True})
+
+        # Инвалидируем предыдущие активные коды
+        PasswordResetCode.objects.filter(user=user, used=False).update(used=True)
+
+        # Сгенерируем 6-значный код и сохраним с TTL 15 минут
+        code = f"{random.randint(100000, 999999)}"
+        expires_at = timezone.now() + timedelta(minutes=15)
+        PasswordResetCode.objects.create(user=user, code=code, expires_at=expires_at)
+
+        # Отправим письмо
+        subject = 'Восстановление пароля NeuroTinnitus'
+        context = {
+            'code': code,
+            'expires_minutes': 15,
+            'site_url': getattr(settings, 'SITE_URL', ''),
+        }
+        text_body = (
+            f"Код для восстановления пароля: {code}\n"
+            f"Срок действия: 15 минут.\n"
+            f"Если вы не запрашивали код, проигнорируйте это письмо.\n"
+        )
+        html_body = (
+            f"<p>Код для восстановления пароля: <strong>{code}</strong></p>"
+            f"<p>Срок действия: 15 минут.</p>"
+            f"<p>Если вы не запрашивали код, просто проигнорируйте это письмо.</p>"
+        )
+        try:
+            msg = EmailMultiAlternatives(
+                subject=subject,
+                body=text_body,
+                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
+                to=[email],
+            )
+            msg.attach_alternative(html_body, 'text/html')
+            msg.send(fail_silently=False)
+        except Exception as e:
+            server_logger.warning(f'password_reset.send_email_failed: user={user.id} err={e}')
+            # Не выдаём подробностей фронту
+        return Response({'sent': True})
+
+
+class PasswordResetConfirmView(APIView):
+    """
+    Подтверждение восстановления пароля.
+    POST JSON: { code, new_password, confirm_password }
+    """
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        code = (request.data.get('code') or '').strip()
+        new_password = request.data.get('new_password') or request.data.get('password')
+        confirm_password = request.data.get('confirm_password') or request.data.get('password_confirm')
+
+        field_errors = {}
+        if not code:
+            field_errors['code'] = ['Это поле обязательно.']
+        if not new_password:
+            field_errors['new_password'] = ['Это поле обязательно.']
+        if not confirm_password:
+            field_errors['confirm_password'] = ['Это поле обязательно.']
+        if field_errors:
+            return Response(field_errors, status=status.HTTP_400_BAD_REQUEST)
+
+        if str(new_password) != str(confirm_password):
+            return Response({'confirm_password': ['Пароли не совпадают.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Найдём действующий код
+        prc = PasswordResetCode.objects.filter(
+            code=code,
+            used=False,
+            expires_at__gt=timezone.now(),
+        ).order_by('-created_at').select_related('user').first()
+        if not prc:
+            return Response({'code': ['Неверный или истёкший код.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = prc.user
+        # Проверка пароля согласно валидаторам проекта
+        try:
+            from django.contrib.auth.password_validation import validate_password
+            validate_password(new_password, user=user)
+        except Exception as e:
+            # Собираем сообщения валидатора
+            msgs = []
+            if hasattr(e, 'messages'):
+                msgs = list(e.messages)
+            else:
+                msgs = [str(e)]
+            return Response({'new_password': msgs}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Устанавливаем пароль
+        user.set_password(new_password)
+        user.save(update_fields=['password'])
+
+        # Помечаем код использованным
+        prc.used = True
+        prc.save(update_fields=['used'])
+
+        return Response({'reset': True})
 
 
 class TelegramAuthView(APIView):
